@@ -1,0 +1,801 @@
+export type Locale = 'zh' | 'en'
+
+type Dict = Record<string, string>
+
+const zh: Dict = {
+  // ── 顶栏 ──
+  'app.badge': 'RESEARCH AI',
+  'app.title': 'RESEARCH TOPIC AGENT',
+  'app.subtitle': '科研选题 Agent',
+  'aria.settings': '设置',
+  'aria.logout': '登出',
+  'aria.sidebar': '侧边栏',
+  'aria.nav': '主导航',
+
+  // ── 侧边栏 ──
+  'sidebar.log': '会话记录',
+  'sidebar.logDesc': '最近 8 次运行记录',
+  'sidebar.empty.title': '暂无数据',
+  'sidebar.empty.desc': '完成一次选题运行后，记录会出现在这里。',
+  'sidebar.pipeline': 'PIPELINE',
+  'sidebar.events': '事件',
+
+  // ── 工作台 ──
+  'ws.title': '工作台',
+  'ws.desc': '选择参与模式 → 输入研究信息 → 系统自动选择 AI 编排架构',
+  'ws.mode.high': 'HIGH // 逐步确认',
+  'ws.mode.low': 'LOW // 自动纠偏',
+  'ws.interest': '> 研究兴趣',
+  'ws.interest.ph': '大模型在教育反馈中的可解释性',
+  'ws.domain': '> 问题域',
+  'ws.domain.ph': '高等教育学习分析',
+  'ws.idea': '> 初步想法',
+  'ws.idea.ph': '利用注意力可视化做教师端反馈解释',
+  'ws.constraints': '> 约束条件',
+  'ws.constraints.ph': '8 周内完成、可用 A100×2、无医学数据',
+  'ws.timeline': '> 时间线（周）',
+  'ws.complexity': '> 复杂度（1-5）',
+  'ws.level': '级别: {n}',
+  'ws.weights': '> 决策权重',
+  'ws.run': '[ 运行 PIPELINE ]',
+  'ws.running': '[ 运行中... ]',
+  'w.novelty': '新颖性',
+  'w.feasibility': '可行性',
+  'w.impact': '影响力',
+  'w.risk': '风险控制',
+  'w.evidence': '证据覆盖',
+
+  // ── 结果 ──
+  'r.arch': '架构总览',
+  'r.complexity': '复杂度',
+  'r.architecture': '架构',
+  'r.interaction': '交互模式',
+  'r.interact.high': '逐步确认 // 每步人工审核',
+  'r.interact.low': '自动全链路 // 终局后纠偏',
+  'r.evidence': '文献证据',
+  'r.format': 'FORMAT:',
+  'r.conflict': 'CONFLICT:',
+  'r.conflictWarn': '{n} 组冲突证据未解决，需人工复核',
+  'r.paths': '路径与决策',
+  'r.selected': '已选择:',
+  'r.override': '> 路径纠偏',
+  'r.override.label': '改选路径',
+  'r.override.keep': '-- 保持当前推荐 --',
+  'r.override.note': '纠偏备注',
+  'r.override.ph': '导师资源约束 / 数据优势...',
+  'r.override.submit': '[ 提交纠偏 ]',
+  'r.gates': '> 人工确认门',
+  'r.gates.warn': '请先完成全部确认门',
+  'r.accept': '[ 接受路径 ]',
+  'r.accepted': '决策已记录 // 准备进入迭代',
+
+  // ── 提示 ──
+  'toast.start': '> Pipeline 启动中...',
+  'toast.done': '> 分析完成 // 推荐: {name}',
+  'toast.fail': '> Pipeline 失败: {msg}',
+  'toast.stageFail': '阶段失败',
+  'toast.unknown': '未知错误',
+  'toast.override': '> 路径已改选: {id}',
+  'toast.gateWarn': '> 请先完成全部确认门',
+  'toast.accepted': '> 决策已确认 // 进入迭代状态',
+
+  // ── 产品视图 ──
+  'pv.personas': '用户画像',
+  'pv.uxFlow': '用户体验流程',
+  'pv.journey': '用户旅程',
+  'pv.deliverables': '交付物',
+  'pv.metrics': '指标看板',
+  'pv.prodKpi': '产品 KPI',
+  'pv.aiQuality': 'AI 质量',
+
+  // ── 运维视图 ──
+  'ops.topology': '服务拓扑',
+  'ops.security': '安全策略',
+  'ops.release': '发布 & API',
+  'ops.releasePlan': '发布计划',
+  'ops.endpoints': 'Endpoints',
+
+  // ── 引导 Tour ──
+  'tour.step': '第 {cur} 步 / 共 {total} 步',
+  'tour.skip': '[ 跳过 ]',
+  'tour.back': '[ 上一步 ]',
+  'tour.next': '[ 下一步 ]',
+  'tour.done': '[ 完成 ]',
+  'tour.1.t': '欢迎',
+  'tour.1.c': '欢迎使用科研选题 Copilot。这是你的 AI 选题工作台，接下来我们快速了解各个功能区。',
+  'tour.2.t': '语言切换',
+  'tour.2.c': '点击此按钮在中文和英文之间切换界面语言，所有页面内容会即时更新。',
+  'tour.3.t': '主题切换',
+  'tour.3.c': '在浅色和深色模式之间切换。系统会记住你的偏好。',
+  'tour.4.t': 'API 配置',
+  'tour.4.c': '点击 [CFG] 设置 AI 提供商（OpenAI / Anthropic）、Model、Base URL 和 API Key。配置后系统将调用真实 LLM 进行分析；未配置则使用内置模拟数据。',
+  'tour.5.t': '参与模式',
+  'tour.5.c': 'HIGH: 每阶段暂停确认，你全程参与决策。LOW: 自动运行全流程，最后统一纠偏。随时可切换。',
+  'tour.6.t': '研究信息',
+  'tour.6.c': '填写 4 个核心字段：研究兴趣、问题域、初步想法、约束条件。描述越具体，AI 分析越精准。',
+  'tour.7.t': '启动 Pipeline',
+  'tour.7.c': '准备就绪后点击运行。系统依次执行：文献检索 → 全景梳理 → 路径比较 → 收敛推荐。运行时右侧会出现快速导航。',
+
+  // ── 认证 ──
+  'auth.boot': '> 系统就绪\n> 需要认证',
+  'auth.logo': 'RESEARCH TOPIC AGENT',
+  'auth.sub': 'v1.0 — AI 驱动的科研选题系统',
+  'auth.prompt.login': '请输入凭证',
+  'auth.prompt.register': '创建新账号',
+  'auth.tab.login': '[登录]',
+  'auth.tab.register': '[注册]',
+  'auth.displayName': '> 显示名称:',
+  'auth.displayName.ph': '你的名字',
+  'auth.username': '> 用户名:',
+  'auth.username.ph': '用户名',
+  'auth.password': '> 密码:',
+  'auth.error': '> 错误:',
+  'auth.submit.login': '[ 登录 ]',
+  'auth.submit.register': '[ 创建账号 ]',
+  'auth.err.notFound': '用户不存在',
+  'auth.err.wrongPw': '密码错误',
+  'auth.err.nameTooShort': '用户名至少 2 个字符',
+  'auth.err.pwTooShort': '密码至少 4 个字符',
+  'auth.err.exists': '用户名已存在',
+  'pay.aria': '订阅计划',
+  'pay.title': '[ 订阅计划 ]',
+  'pay.desc': '升级 Pro 解锁完整导出功能和更多高级特性',
+  'pay.free': 'FREE',
+  'pay.pro': 'PRO',
+  'pay.forever': '永久免费',
+  'pay.monthly': '/ 月',
+  'pay.current': '当前方案',
+  'pay.upgrade': '[ 升级 PRO ]',
+  'pay.f.pipeline': '完整 4 阶段 Pipeline 分析',
+  'pay.f.mock': '内置 Mock 数据演示',
+  'pay.f.history': '最近 8 次运行记录',
+  'pay.f.i18n': '中英双语支持',
+  'pay.f.theme': '浅色/深色主题 + 4 种配色',
+  'pay.f.export': 'Markdown / 剪贴板导出',
+  'pay.f.pdf': 'PDF 报告导出',
+  'pay.f.unlimited': '不限次数 LLM 调用',
+  'pay.f.priority': '优先技术支持',
+  'pay.p.all_free': '包含 Free 全部功能',
+  'pay.p.compare': '多次运行对比分析',
+  'pay.p.team': '团队协作（即将上线）',
+  'pay.locked': '此功能需要 Pro 订阅',
+  'pay.toast.upgrade': '已升级为 Pro！',
+
+  // ── 导出 ──
+  'export.copy': '复制报告',
+  'export.download': '下载 Markdown',
+  'export.copied': '报告已复制到剪贴板',
+  'export.copyFail': '复制失败，请手动选择文本',
+  'export.downloaded': '报告已下载',
+  'nollm.aria': '未配置 LLM',
+  'nollm.title': '[ API 未配置 ]',
+  'nollm.desc': '当前未配置 LLM API Key。你可以前往设置配置真实 API，或使用内置 Mock 数据预览完整流程。',
+  'nollm.configure': '[ 前往配置 ]',
+  'nollm.mock': '[ Mock 预览 ]',
+  'nollm.cancel': '[ 取消 ]',
+  'sidebar.viewDetail': '点击查看详情',
+
+  // ── 设置 ──
+  'cfg.title': '> 系统配置',
+  'cfg.aria': '设置',
+  'cfg.close': '关闭',
+  'cfg.api': '> API 配置',
+  'cfg.provider': '提供商',
+  'cfg.model': '模型',
+  'cfg.baseUrl': 'API Base URL',
+  'cfg.baseUrl.openai': '兼容 DeepSeek / Moonshot 等 OpenAI 协议端点',
+  'cfg.baseUrl.anthropic': 'Anthropic Messages API 端点',
+  'cfg.apiKey': 'API Key',
+  'cfg.keyOk': '✓ Key 格式正确',
+  'cfg.keyBad': '⚠ Key 前缀不匹配',
+  'cfg.keyEmpty': '未配置 — Pipeline 将使用内置模拟数据',
+  'cfg.testBtn': '测试连通性',
+  'cfg.testing': '测试中…',
+  'cfg.testOk': '✓ 连接成功',
+  'cfg.testFail': '✕ 连接失败',
+  'cfg.appearance': '> 外观',
+  'cfg.scheme': '配色方案',
+  'cfg.scanlines': '扫描线效果',
+  'cfg.crtGlow': 'CRT 发光',
+  'cfg.defaults': '> 默认值',
+  'cfg.partMode': '参与模式',
+  'cfg.complexHint': '复杂度提示',
+  'cfg.timeline': '时间线（周）',
+  'cfg.language': '> 语言',
+  'cfg.reset': '[ 重置 ]',
+  'cfg.done': '[ 完成 ]',
+  'cfg.rememberKey': '记住 Key',
+  'cfg.rememberKey.desc': '加密存储到本地，下次无需重新输入',
+  'cfg.theme': '> 主题',
+  'cfg.theme.light': '浅色',
+  'cfg.theme.dark': '深色',
+
+  // ── 引导横幅 ──
+  'ob.aria': '快速入门',
+  'ob.title': '快速开始',
+  'ob.desc': '3 步起步: 选择参与模式 → 描述研究兴趣与约束 → 运行 Pipeline。系统根据复杂度自动选择 AI 编排架构。',
+  'nav.input': '输入',
+  'nav.thinking': '思考',
+  'nav.arch': '架构',
+  'nav.evidence': '证据',
+  'nav.paths': '路径',
+  'nav.top': '顶部',
+
+  // ── 分享 / 导出 ──
+  'share.copy': '复制报告',
+  'share.download': '下载 Markdown',
+  'share.copied': '报告已复制到剪贴板，可直接粘贴给导师',
+  'share.copyFail': '复制失败，请手动选择文本',
+  'share.downloaded': '报告已下载',
+  'share.rpt.title': '# Research Topic Copilot - 选题报告',
+  'share.rpt.time': '> 生成时间:',
+  'share.rpt.input': '## 输入概要',
+  'share.rpt.interest': '研究兴趣',
+  'share.rpt.domain': '问题域',
+  'share.rpt.idea': '初步想法',
+  'share.rpt.constraints': '约束条件',
+  'share.rpt.mode': '参与模式',
+  'share.rpt.mode.high': '高参与共创',
+  'share.rpt.mode.low': '低参与自动',
+  'share.rpt.arch': '## 复杂度与架构',
+  'share.rpt.candidates': '## 候选路径',
+  'share.rpt.tableH': '| 路径 | 综合分 | 置信度 | 新颖性 | 可行性 |',
+  'share.rpt.tableSep': '|------|--------|--------|--------|--------|',
+  'share.rpt.rec': '## 推荐路径',
+  'share.rpt.hypothesis': '核心假设',
+  'share.rpt.method': '方法链路',
+  'share.rpt.experiment': '首个可证伪实验',
+  'share.rpt.stopCond': '止损条件',
+  'share.rpt.plan': '## 7 天行动计划',
+  'share.rpt.footer': '*由 Research Topic Copilot 生成*',
+  'share.rpt.filename': '选题报告',
+
+  // ── 思考面板 ──
+  'sp.title': 'AI 思考过程',
+  'sp.collapse': '收起',
+  'sp.expand': '展开',
+  'sp.pending': '等待中',
+  'sp.thinking': '分析中…',
+  'sp.data': '结构化输出',
+  'sp.navPrev': '上一步',
+  'sp.navNext': '下一步',
+  'sp.step': '步骤',
+  'sp.running': '运行中',
+  'sp.done': '✓ 完成',
+  'sp.error': '✕ 错误',
+
+  // ── 引擎: 阶段标签 ──
+  'stg.retrieve': '文献检索',
+  'stg.map': '全景梳理',
+  'stg.compare': '路径比较',
+  'stg.converge': '收敛判断',
+  'stg.retrieve.start': '启动文献检索...',
+  'stg.map.start': '启动全景梳理...',
+  'stg.compare.start': '生成候选路径...',
+  'stg.converge.start': '收敛推荐中...',
+  'stg.retrieve.done': '已获取 {n} 条证据',
+  'stg.map.done': '复杂度 {score}，架构 {mode}',
+  'stg.compare.done': '已生成 {n} 条候选路径',
+  'stg.converge.done': '推荐路径: {id}',
+  'stg.idle': '等待启动',
+
+  // ── 引擎: Mock Streaming ──
+  'mock.ret.1': '### 检索策略',
+  'mock.ret.2': '- **关键词**: "{interest}"',
+  'mock.ret.3': '- **目标域**: {domain}',
+  'mock.ret.4': '### 数据库范围',
+  'mock.ret.5': '1. OpenAlex — 高被引综述聚类',
+  'mock.ret.6': '2. Semantic Scholar — 引文链追踪',
+  'mock.ret.7': '3. arXiv — 最新预印本',
+  'mock.ret.8': '### 结果',
+  'mock.ret.9': '- 去重合并 → **{n}** 条证据',
+  'mock.ret.10': '- 层级: T1×{t1}, T2×{t2}, T3×{t3}',
+  'mock.ret.11': '- 冲突检测: {info}',
+  'mock.ret.none': '无',
+  'mock.map.1': '### 分析维度',
+  'mock.map.2': '1. 提取证据核心论点',
+  'mock.map.3': '2. 分析方法论谱系',
+  'mock.map.4': '3. 评估跨学科因子',
+  'mock.map.5': '### 评估结果',
+  'mock.map.6': '- 复杂度: **{score}**/100 → `{level}`',
+  'mock.map.7': '- 推荐架构: **{arch}**',
+  'mock.map.8': '- 模块: {modules}',
+  'mock.cmp.1': '### 路径设计策略',
+  'mock.cmp.2': '基于证据池生成 **3** 条差异化候选方向：',
+  'mock.cmp.3': '1. **P1 机制澄清型** — 优先解释"为什么有效"',
+  'mock.cmp.4': '2. **P2 工程验证型** — 优先做可复现基线',
+  'mock.cmp.5': '3. **P3 跨域迁移型** — 追求高影响力',
+  'mock.cmp.6': '### 评分',
+  'mock.cmp.7': '- 权重: NOV={nov}% FEAS={feas}% IMP={imp}%',
+  'mock.cmp.8': '- 排序: {ranking}',
+  'mock.cmp.9': '- 置信度: **{conf}%**',
+  'mock.cvg.1': '### 决策过程',
+  'mock.cvg.conflict': '- ⚠ 冲突: {id} ↔ {targets}',
+  'mock.cvg.noConflict': '- ✓ 无冲突证据',
+  'mock.cvg.2': '归因分析完成',
+  'mock.cvg.3': '### 推荐结果',
+  'mock.cvg.4': '- 推荐路径: **{id}** — {name}',
+  'mock.cvg.5': '- 7 天行动计划已生成 ✓',
+
+  // ── 引擎: LLM Prompts ──
+  'llm.retrieve.sys': `你是学术文献检索助手。请严格按以下格式输出：
+
+第一部分 — 分析思考（Markdown 格式）：
+用结构化 Markdown 描述你的检索策略、关键词选择、数据库范围等分析过程，可使用标题、列表、粗体等格式。
+
+第二部分 — 结构化数据：
+在分析结束后独占一行输出 ---DATA--- 作为分隔符，然后输出纯 JSON。
+
+重要：你必须全程使用中文回答。所有分析文本、JSON 中的字符串值（标题、结论、来源描述等）都必须使用中文。`,
+  'llm.map.sys': `你是研究复杂度分析专家。请严格按以下格式输出：
+
+第一部分 — 分析思考（Markdown 格式）：
+用结构化 Markdown 描述你的复杂度评估过程、维度分析、架构决策推理等，可使用标题、列表、粗体等格式。
+
+第二部分 — 结构化数据：
+在分析结束后独占一行输出 ---DATA--- 作为分隔符，然后输出纯 JSON。
+
+重要：你必须全程使用中文回答。所有分析文本、JSON 中的字符串值（原因、模块名等）都必须使用中文。`,
+  'llm.compare.sys': `你是研究路径比较专家。请严格按以下格式输出：
+
+第一部分 — 分析思考（Markdown 格式）：
+用结构化 Markdown 描述你的路径设计思路、差异化策略、评分依据等，可使用标题、列表、粗体等格式。
+
+第二部分 — 结构化数据：
+在分析结束后独占一行输出 ---DATA--- 作为分隔符，然后输出纯 JSON。
+
+重要：你必须全程使用中文回答。所有分析文本、JSON 中的字符串值（路径名称、假设、方法等）都必须使用中文。`,
+  'llm.converge.sys': `你是研究决策顾问。请严格按以下格式输出：
+
+第一部分 — 分析思考（Markdown 格式）：
+用结构化 Markdown 描述你的决策过程、权衡考量、风险评估等，可使用标题、列表、粗体等格式。
+
+第二部分 — 结构化数据：
+在分析结束后独占一行输出 ---DATA--- 作为分隔符，然后输出纯 JSON。
+
+重要：你必须全程使用中文回答。所有分析文本、JSON 中的字符串值（推荐理由、行动计划等）都必须使用中文。`,
+
+  // ── 引擎: 其他 ──
+  'engine.mode.high': '高参与共创模式',
+  'engine.mode.low': '低参与自动模式',
+  'engine.gate.skip': '低参与模式下默认跳过，最终统一在纠偏阶段确认',
+
+  // ── 迭代追踪 ──
+  'iter.title': '迭代追踪',
+  'iter.path': '路径',
+  'iter.daysSince': '已启动 {n} 天',
+  'iter.progress': '进度',
+  'iter.checklist': '7 天行动计划',
+  'iter.day': '第 {n} 天',
+  'iter.journal': '研究日志',
+  'iter.journalPlaceholder': '记录今天的发现、问题或想法…',
+  'iter.add': '添加',
+  'iter.noEntries': '暂无日志，开始记录你的研究进展。',
+  'iter.actions': '迭代操作',
+  'iter.rerun': '重新运行',
+  'iter.rerunDesc': '使用相同配置重新运行 Pipeline，对比本次结果。',
+  'iter.compare': '对比历史',
+  'iter.compareDesc': '与上一次运行结果进行对比分析。',
+  'iter.noPrev': '暂无上一次运行记录。',
+  'iter.complete': '标记完成',
+  'iter.abandon': '放弃',
+  'iter.status.active': '进行中',
+  'iter.status.completed': '已完成',
+  'iter.status.abandoned': '已放弃',
+  'iter.history': '迭代历史',
+  'iter.historyEmpty': '暂无历史迭代记录。',
+  'iter.back': '← 返回工作台',
+  'iter.toastCreated': '迭代计划已创建，开始你的 7 天行动吧！',
+  'iter.toastCompleted': '恭喜，迭代完成！',
+  'iter.toastAbandoned': '迭代已放弃。',
+  'iter.compareTitle': '运行结果对比',
+  'iter.current': '当前运行',
+  'iter.previous': '上次运行',
+}
+
+const en: Dict = {
+  // ── Topbar ──
+  'app.badge': 'RESEARCH AI',
+  'app.title': 'RESEARCH TOPIC AGENT',
+  'app.subtitle': 'Research Agent',
+  'aria.settings': 'Settings',
+  'aria.logout': 'Log out',
+  'aria.sidebar': 'Sidebar',
+  'aria.nav': 'Main navigation',
+
+  // ── Sidebar ──
+  'sidebar.log': 'SESSION LOG',
+  'sidebar.logDesc': 'Recent 8 runs',
+  'sidebar.empty.title': 'NO DATA',
+  'sidebar.empty.desc': 'Run your first topic pipeline and records will appear here.',
+  'sidebar.pipeline': 'PIPELINE',
+  'sidebar.events': 'EVENTS',
+
+  // ── Workspace ──
+  'ws.title': 'WORKSPACE',
+  'ws.desc': 'Select mode → Enter research info → System auto-selects AI orchestration',
+  'ws.mode.high': 'HIGH // Step-by-step',
+  'ws.mode.low': 'LOW // Auto + override',
+  'ws.interest': '> Research Interest',
+  'ws.interest.ph': 'Interpretability of LLMs in educational feedback',
+  'ws.domain': '> Problem Domain',
+  'ws.domain.ph': 'Higher education learning analytics',
+  'ws.idea': '> Seed Idea',
+  'ws.idea.ph': 'Use attention visualization for teacher-side feedback explanation',
+  'ws.constraints': '> Constraints',
+  'ws.constraints.ph': '8 weeks, A100×2 available, no medical data',
+  'ws.timeline': '> Timeline (weeks)',
+  'ws.complexity': '> Complexity (1-5)',
+  'ws.level': 'LEVEL: {n}',
+  'ws.weights': '> WEIGHTS',
+  'ws.run': '[ RUN PIPELINE ]',
+  'ws.running': '[ RUNNING... ]',
+  'w.novelty': 'NOVELTY',
+  'w.feasibility': 'FEASIBILITY',
+  'w.impact': 'IMPACT',
+  'w.risk': 'RISK_CTRL',
+  'w.evidence': 'EVIDENCE',
+
+  // ── Result ──
+  'r.arch': 'ARCHITECTURE',
+  'r.complexity': 'Complexity',
+  'r.architecture': 'Architecture',
+  'r.interaction': 'Interaction',
+  'r.interact.high': 'Step-by-step // Manual review at each stage',
+  'r.interact.low': 'Fully automatic // Override at the end',
+  'r.evidence': 'EVIDENCE',
+  'r.format': 'FORMAT:',
+  'r.conflict': 'CONFLICT:',
+  'r.conflictWarn': '{n} unresolved conflict group(s) // Manual review needed',
+  'r.paths': 'PATHS & DECISION',
+  'r.selected': 'SELECTED:',
+  'r.override': '> OVERRIDE',
+  'r.override.label': 'Override path',
+  'r.override.keep': '-- KEEP RECOMMENDATION --',
+  'r.override.note': 'Override note',
+  'r.override.ph': 'Advisor constraints / data advantage...',
+  'r.override.submit': '[ SUBMIT OVERRIDE ]',
+  'r.gates': '> MANUAL GATES',
+  'r.gates.warn': 'Please complete all manual gates first',
+  'r.accept': '[ ACCEPT PATH ]',
+  'r.accepted': 'DECISION RECORDED // READY FOR ITERATION',
+
+  // ── Toasts ──
+  'toast.start': '> Pipeline starting...',
+  'toast.done': '> Analysis complete // Recommended: {name}',
+  'toast.fail': '> Pipeline failed: {msg}',
+  'toast.stageFail': 'STAGE FAILED',
+  'toast.unknown': 'Unknown error',
+  'toast.override': '> Path overridden: {id}',
+  'toast.gateWarn': '> Please complete all manual gates first',
+  'toast.accepted': '> Decision confirmed // Entering iteration',
+
+  // ── Product View ──
+  'pv.personas': 'PERSONAS',
+  'pv.uxFlow': 'UX FLOW',
+  'pv.journey': 'User Journey',
+  'pv.deliverables': 'Deliverables',
+  'pv.metrics': 'METRICS',
+  'pv.prodKpi': 'Product KPIs',
+  'pv.aiQuality': 'AI Quality',
+
+  // ── Ops View ──
+  'ops.topology': 'SERVICE TOPOLOGY',
+  'ops.security': 'SECURITY',
+  'ops.release': 'RELEASE & API',
+  'ops.releasePlan': 'Release Plan',
+  'ops.endpoints': 'Endpoints',
+
+  // ── Tour ──
+  'tour.step': 'STEP {cur} / {total}',
+  'tour.skip': '[ SKIP ]',
+  'tour.back': '[ BACK ]',
+  'tour.next': '[ NEXT ]',
+  'tour.done': '[ DONE ]',
+  'tour.1.t': 'WELCOME',
+  'tour.1.c': 'Welcome to Research Topic Copilot. This is your AI workspace — let\'s walk through the key areas.',
+  'tour.2.t': 'Language',
+  'tour.2.c': 'Switch between English and Chinese. All content updates instantly.',
+  'tour.3.t': 'Theme',
+  'tour.3.c': 'Toggle between light and dark mode. Your preference is saved automatically.',
+  'tour.4.t': 'API Config',
+  'tour.4.c': 'Click [CFG] to configure your AI provider (OpenAI / Anthropic), model, Base URL, and API Key. Real LLM analysis requires an API key; otherwise built-in mock data is used.',
+  'tour.5.t': 'Participation Mode',
+  'tour.5.c': 'HIGH: Pause for confirmation at each stage. LOW: Fully automatic, override at the end. You can switch anytime.',
+  'tour.6.t': 'Research Input',
+  'tour.6.c': 'Fill in 4 core fields: research interest, problem domain, seed idea, and constraints. More detail = better AI analysis.',
+  'tour.7.t': 'Start Pipeline',
+  'tour.7.c': 'Click RUN when ready. The system runs: Literature Retrieval → Landscape Mapping → Path Comparison → Convergence. A quick navigation pin appears on the right during execution.',
+
+  // ── Auth ──
+  'auth.boot': '> SYSTEM READY\n> AUTH REQUIRED',
+  'auth.logo': 'RESEARCH TOPIC AGENT',
+  'auth.sub': 'v1.0 — AI-Powered Research Direction System',
+  'auth.prompt.login': 'Enter credentials',
+  'auth.prompt.register': 'Create new account',
+  'auth.tab.login': '[LOGIN]',
+  'auth.tab.register': '[REGISTER]',
+  'auth.displayName': '> DISPLAY_NAME:',
+  'auth.displayName.ph': 'your_name',
+  'auth.username': '> USERNAME:',
+  'auth.username.ph': 'username',
+  'auth.password': '> PASSWORD:',
+  'auth.error': '> ERROR:',
+  'auth.submit.login': '[ AUTHENTICATE ]',
+  'auth.submit.register': '[ CREATE_ACCOUNT ]',
+  'auth.err.notFound': 'User not found',
+  'auth.err.wrongPw': 'Wrong password',
+  'auth.err.nameTooShort': 'Username must be at least 2 characters',
+  'auth.err.pwTooShort': 'Password must be at least 4 characters',
+  'auth.err.exists': 'Username already exists',
+  'pay.aria': 'Subscription Plans',
+  'pay.title': '[ SUBSCRIPTION PLANS ]',
+  'pay.desc': 'Upgrade to Pro to unlock full export and premium features',
+  'pay.free': 'FREE',
+  'pay.pro': 'PRO',
+  'pay.forever': 'Free forever',
+  'pay.monthly': '/ mo',
+  'pay.current': 'CURRENT PLAN',
+  'pay.upgrade': '[ UPGRADE TO PRO ]',
+  'pay.f.pipeline': 'Full 4-stage Pipeline analysis',
+  'pay.f.mock': 'Built-in mock data demo',
+  'pay.f.history': 'Last 8 session history',
+  'pay.f.i18n': 'English & Chinese support',
+  'pay.f.theme': 'Light/Dark + 4 color schemes',
+  'pay.f.export': 'Markdown / Clipboard export',
+  'pay.f.pdf': 'PDF report export',
+  'pay.f.unlimited': 'Unlimited LLM calls',
+  'pay.f.priority': 'Priority support',
+  'pay.p.all_free': 'Everything in Free',
+  'pay.p.compare': 'Multi-run comparison',
+  'pay.p.team': 'Team collaboration (coming soon)',
+  'pay.locked': 'This feature requires a Pro subscription',
+  'pay.toast.upgrade': 'Upgraded to Pro!',
+
+  // ── Export ──
+  'export.copy': 'Copy Report',
+  'export.download': 'Download Markdown',
+  'export.copied': 'Report copied to clipboard',
+  'export.copyFail': 'Copy failed — please select text manually',
+  'export.downloaded': 'Report downloaded',
+  'nollm.aria': 'LLM Not Configured',
+  'nollm.title': '[ API NOT CONFIGURED ]',
+  'nollm.desc': 'No LLM API Key configured. You can go to settings to configure a real API, or use built-in mock data to preview the full pipeline.',
+  'nollm.configure': '[ CONFIGURE ]',
+  'nollm.mock': '[ MOCK PREVIEW ]',
+  'nollm.cancel': '[ CANCEL ]',
+  'sidebar.viewDetail': 'Click to view details',
+
+  // ── Settings ──
+  'cfg.title': '> CONFIG.SYS',
+  'cfg.aria': 'Settings',
+  'cfg.close': 'Close',
+  'cfg.api': '> API CONFIG',
+  'cfg.provider': 'Provider',
+  'cfg.model': 'Model',
+  'cfg.baseUrl': 'API Base URL',
+  'cfg.baseUrl.openai': 'Compatible with DeepSeek / Moonshot and other OpenAI-protocol endpoints',
+  'cfg.baseUrl.anthropic': 'Anthropic Messages API endpoint',
+  'cfg.apiKey': 'API Key',
+  'cfg.keyOk': '✓ KEY FORMAT OK',
+  'cfg.keyBad': '⚠ KEY PREFIX MISMATCH',
+  'cfg.keyEmpty': 'Not configured — Pipeline will use built-in mock data',
+  'cfg.testBtn': 'Test Connection',
+  'cfg.testing': 'Testing…',
+  'cfg.testOk': '✓ Connected',
+  'cfg.testFail': '✕ Connection Failed',
+  'cfg.appearance': '> APPEARANCE',
+  'cfg.scheme': 'Color Scheme',
+  'cfg.scanlines': 'Scanlines',
+  'cfg.crtGlow': 'CRT Glow',
+  'cfg.defaults': '> DEFAULTS',
+  'cfg.partMode': 'Participation Mode',
+  'cfg.complexHint': 'Complexity Hint',
+  'cfg.timeline': 'Timeline (weeks)',
+  'cfg.language': '> LANGUAGE',
+  'cfg.reset': '[ RESET ]',
+  'cfg.done': '[ DONE ]',
+  'cfg.rememberKey': 'Remember Key',
+  'cfg.rememberKey.desc': 'Encrypt and persist locally across sessions',
+  'cfg.theme': '> THEME',
+  'cfg.theme.light': 'Light',
+  'cfg.theme.dark': 'Dark',
+
+  // ── Onboarding ──
+  'ob.aria': 'Getting started',
+  'ob.title': 'QUICKSTART',
+  'ob.desc': '3 steps: Select mode → Describe research interest & constraints → RUN PIPELINE. The system auto-selects the optimal AI orchestration architecture.',
+  'nav.input': 'Input',
+  'nav.thinking': 'Thinking',
+  'nav.arch': 'Arch',
+  'nav.evidence': 'Evidence',
+  'nav.paths': 'Paths',
+  'nav.top': 'Top',
+
+  // ── Share / Export ──
+  'share.copy': 'Copy report',
+  'share.download': 'Download Markdown',
+  'share.copied': 'Report copied to clipboard',
+  'share.copyFail': 'Copy failed — please select text manually',
+  'share.downloaded': 'Report downloaded',
+  'share.rpt.title': '# Research Topic Copilot - Report',
+  'share.rpt.time': '> Generated at:',
+  'share.rpt.input': '## Input Summary',
+  'share.rpt.interest': 'Research Interest',
+  'share.rpt.domain': 'Problem Domain',
+  'share.rpt.idea': 'Seed Idea',
+  'share.rpt.constraints': 'Constraints',
+  'share.rpt.mode': 'Participation Mode',
+  'share.rpt.mode.high': 'High participation',
+  'share.rpt.mode.low': 'Low participation (auto)',
+  'share.rpt.arch': '## Complexity & Architecture',
+  'share.rpt.candidates': '## Candidate Paths',
+  'share.rpt.tableH': '| Path | Score | Confidence | Novelty | Feasibility |',
+  'share.rpt.tableSep': '|------|-------|------------|---------|-------------|',
+  'share.rpt.rec': '## Recommended Path',
+  'share.rpt.hypothesis': 'Hypothesis',
+  'share.rpt.method': 'Method',
+  'share.rpt.experiment': 'First falsifiable experiment',
+  'share.rpt.stopCond': 'Stop condition',
+  'share.rpt.plan': '## 7-Day Action Plan',
+  'share.rpt.footer': '*Generated by Research Topic Copilot*',
+  'share.rpt.filename': 'topic_report',
+
+  // ── Stream Panel ──
+  'sp.title': 'THINKING',
+  'sp.collapse': 'Collapse',
+  'sp.expand': 'Expand',
+  'sp.pending': 'PENDING',
+  'sp.thinking': 'Analyzing…',
+  'sp.data': 'Structured Output',
+  'sp.navPrev': 'Prev',
+  'sp.navNext': 'Next',
+  'sp.step': 'Step',
+  'sp.running': 'RUNNING',
+  'sp.done': '✓ DONE',
+  'sp.error': '✕ ERROR',
+
+  // ── Engine: stage labels ──
+  'stg.retrieve': 'Retrieval',
+  'stg.map': 'Mapping',
+  'stg.compare': 'Comparison',
+  'stg.converge': 'Convergence',
+  'stg.retrieve.start': 'Starting retrieval...',
+  'stg.map.start': 'Starting mapping...',
+  'stg.compare.start': 'Generating candidate paths...',
+  'stg.converge.start': 'Converging recommendation...',
+  'stg.retrieve.done': '{n} evidence items retrieved',
+  'stg.map.done': 'Complexity {score}, architecture {mode}',
+  'stg.compare.done': '{n} candidate paths',
+  'stg.converge.done': 'Recommended: {id}',
+  'stg.idle': 'Waiting',
+
+  // ── Engine: mock streaming ──
+  'mock.ret.1': '### Retrieval Strategy',
+  'mock.ret.2': '- **Keywords**: "{interest}"',
+  'mock.ret.3': '- **Target Domain**: {domain}',
+  'mock.ret.4': '### Database Scope',
+  'mock.ret.5': '1. OpenAlex — Highly-cited review clustering',
+  'mock.ret.6': '2. Semantic Scholar — Citation chain tracking',
+  'mock.ret.7': '3. arXiv — Latest preprints',
+  'mock.ret.8': '### Results',
+  'mock.ret.9': '- Dedup & merge → **{n}** evidence items',
+  'mock.ret.10': '- Tiers: T1×{t1}, T2×{t2}, T3×{t3}',
+  'mock.ret.11': '- Conflict detection: {info}',
+  'mock.ret.none': 'none',
+  'mock.map.1': '### Analysis Dimensions',
+  'mock.map.2': '1. Extract core claims from evidence',
+  'mock.map.3': '2. Analyze methodology landscape',
+  'mock.map.4': '3. Evaluate interdisciplinary factors',
+  'mock.map.5': '### Assessment',
+  'mock.map.6': '- Complexity: **{score}**/100 → `{level}`',
+  'mock.map.7': '- Recommended architecture: **{arch}**',
+  'mock.map.8': '- Modules: {modules}',
+  'mock.cmp.1': '### Path Design Strategy',
+  'mock.cmp.2': 'Generating **3** differentiated candidates from evidence pool:',
+  'mock.cmp.3': '1. **P1 Mechanistic** — prioritize explaining "why it works"',
+  'mock.cmp.4': '2. **P2 Engineering** — prioritize reproducible baseline',
+  'mock.cmp.5': '3. **P3 Cross-domain** — pursue high impact',
+  'mock.cmp.6': '### Scoring',
+  'mock.cmp.7': '- Weights: NOV={nov}% FEAS={feas}% IMP={imp}%',
+  'mock.cmp.8': '- Ranking: {ranking}',
+  'mock.cmp.9': '- Confidence: **{conf}%**',
+  'mock.cvg.1': '### Decision Process',
+  'mock.cvg.conflict': '- ⚠ Conflict: {id} ↔ {targets}',
+  'mock.cvg.noConflict': '- ✓ No conflicting evidence',
+  'mock.cvg.2': 'Attribution analysis complete',
+  'mock.cvg.3': '### Recommendation',
+  'mock.cvg.4': '- Recommended path: **{id}** — {name}',
+  'mock.cvg.5': '- 7-day action plan generated ✓',
+
+  // ── Engine: LLM prompts ──
+  'llm.retrieve.sys': `You are an academic literature retrieval assistant. Output in EXACTLY this format:
+
+Part 1 — Analysis (Markdown):
+Describe your retrieval strategy, keyword selection, database scope, etc. in structured Markdown (headings, lists, bold, etc.).
+
+Part 2 — Structured Data:
+After your analysis, output ---DATA--- on its own line as a delimiter, then output pure JSON.
+
+IMPORTANT: You MUST respond entirely in English. All analysis text, JSON string values, titles, claims, and descriptions must be written in English. Do NOT use any other language.`,
+  'llm.map.sys': `You are a research complexity analysis expert. Output in EXACTLY this format:
+
+Part 1 — Analysis (Markdown):
+Describe your complexity assessment, dimensional analysis, architecture decision reasoning, etc. in structured Markdown.
+
+Part 2 — Structured Data:
+After your analysis, output ---DATA--- on its own line as a delimiter, then output pure JSON.
+
+IMPORTANT: You MUST respond entirely in English. All analysis text, JSON string values, rationale, and module names must be written in English. Do NOT use any other language.`,
+  'llm.compare.sys': `You are a research path comparison expert. Output in EXACTLY this format:
+
+Part 1 — Analysis (Markdown):
+Describe your path design rationale, differentiation strategy, scoring basis, etc. in structured Markdown.
+
+Part 2 — Structured Data:
+After your analysis, output ---DATA--- on its own line as a delimiter, then output pure JSON.
+
+IMPORTANT: You MUST respond entirely in English. All analysis text, JSON string values, path names, hypotheses, and methods must be written in English. Do NOT use any other language.`,
+  'llm.converge.sys': `You are a research decision advisor. Output in EXACTLY this format:
+
+Part 1 — Analysis (Markdown):
+Describe your decision process, trade-off considerations, risk assessment, etc. in structured Markdown.
+
+Part 2 — Structured Data:
+After your analysis, output ---DATA--- on its own line as a delimiter, then output pure JSON.
+
+IMPORTANT: You MUST respond entirely in English. All analysis text, JSON string values, recommendations, and action plans must be written in English. Do NOT use any other language.`,
+
+  // ── Engine: misc labels ──
+  'engine.mode.high': 'High participation (co-creation)',
+  'engine.mode.low': 'Low participation (auto)',
+  'engine.gate.skip': 'Skipped in low-participation mode — final override available at the end',
+
+  // ── Iteration Tracker ──
+  'iter.title': 'ITERATION TRACKER',
+  'iter.path': 'Path',
+  'iter.daysSince': 'Day {n}',
+  'iter.progress': 'Progress',
+  'iter.checklist': '7-Day Action Plan',
+  'iter.day': 'Day {n}',
+  'iter.journal': 'Research Journal',
+  'iter.journalPlaceholder': 'Record today\'s findings, questions, or insights…',
+  'iter.add': 'Add',
+  'iter.noEntries': 'No journal entries yet. Start logging your research progress.',
+  'iter.actions': 'Iteration Actions',
+  'iter.rerun': 'Re-run',
+  'iter.rerunDesc': 'Re-run the pipeline with the same config and compare results.',
+  'iter.compare': 'Compare',
+  'iter.compareDesc': 'Side-by-side comparison with the previous run.',
+  'iter.noPrev': 'No previous run to compare with.',
+  'iter.complete': 'Mark Complete',
+  'iter.abandon': 'Abandon',
+  'iter.status.active': 'Active',
+  'iter.status.completed': 'Completed',
+  'iter.status.abandoned': 'Abandoned',
+  'iter.history': 'Iteration History',
+  'iter.historyEmpty': 'No iteration history yet.',
+  'iter.back': '← Back to workspace',
+  'iter.toastCreated': 'Iteration plan created — start your 7-day action plan!',
+  'iter.toastCompleted': 'Iteration completed!',
+  'iter.toastAbandoned': 'Iteration abandoned.',
+  'iter.compareTitle': 'Run Comparison',
+  'iter.current': 'Current Run',
+  'iter.previous': 'Previous Run',
+}
+
+export const messages: Record<Locale, Dict> = { zh, en }
+
+export function t(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  let text = messages[locale]?.[key] ?? messages.en[key] ?? key
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replaceAll(`{${k}}`, String(v))
+    }
+  }
+  return text
+}
