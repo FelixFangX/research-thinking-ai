@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from 'react'
 import { useI18n } from '../i18n'
 
-export type AuthErrorCode = 'notFound' | 'wrongPw' | 'nameTooShort' | 'pwTooShort' | 'exists'
+export type AuthErrorCode = 'notFound' | 'wrongPw' | 'nameTooShort' | 'pwTooShort' | 'exists' | 'invalid' | 'weakPw' | 'error'
 
 interface Props {
-  onLogin: (username: string, password: string) => AuthErrorCode | null | Promise<AuthErrorCode | null>
-  onRegister: (username: string, password: string, displayName: string) => AuthErrorCode | null | Promise<AuthErrorCode | null>
+  onLogin: (email: string, password: string) => AuthErrorCode | null | Promise<AuthErrorCode | null>
+  onRegister: (email: string, password: string, displayName: string) => AuthErrorCode | null | Promise<AuthErrorCode | null>
 }
 
 export function AuthGate({ onLogin, onRegister }: Props) {
