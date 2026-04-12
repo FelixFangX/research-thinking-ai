@@ -4,9 +4,5 @@
       "source": "/functions/:path*",
       "destination": "https://oicpdyxbgbftedhlhvjd.supabase.co/functions/v1/:path*"
     }
-  ],
-  "env": {
-    "VITE_SUPABASE_URL": "https://oicpdyxbgbftedhlhvjd.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pY3BkeXhiZ2JmdGVkaGxodmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NjQ2NjMsImV4cCI6MjA5MTU0MDY2M30.45Dt05-qsn59q0JGCmcFN4aBQZzTf3TCcbrsZ-hr79s"
-  }
+  ]
 }
