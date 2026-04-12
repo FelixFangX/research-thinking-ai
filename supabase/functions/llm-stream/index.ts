@@ -1,6 +1,6 @@
 // Supabase Edge Function: llm-stream
 // BFF layer for LLM calls — API Key never exposed to frontend
-// Supports OpenAI and Anthropic SSE streaming
+// Supports OpenAI-compatible SSE streaming (including MiniMax, OpenAI, Anthropic)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
@@ -9,24 +9,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const encoder = new TextEncoder()
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // LLM API Key is stored in Edge Function environment variables
-    // (set via: supabase secrets set LLM_API_KEY=sk-...)
     const llmApiKey = Deno.env.get('LLM_API_KEY')
     if (!llmApiKey) {
       return new Response(JSON.stringify({ error: 'LLM_API_KEY not configured in Edge Function' }), {
@@ -67,8 +55,9 @@ serve(async (req) => {
         messages: rest.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })),
       }
     } else {
-      const base = (baseUrl || 'https://api.openai.com').replace(/\/$/, '')
-      upstreamUrl = `${base}/v1/chat/completions`
+      // OpenAI-compatible (MiniMax, OpenAI, etc.)
+      const base = (baseUrl || Deno.env.get('LLM_DEFAULT_BASE_URL') || 'https://api.openai.com').replace(/\/$/, '')
+      upstreamUrl = `${base}/chat/completions`
       upstreamHeaders = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${llmApiKey}`,
@@ -82,7 +71,7 @@ serve(async (req) => {
       }
     }
 
-    // Proxy the streaming request
+    // Proxy the streaming request to upstream LLM
     const upstream = await fetch(upstreamUrl, {
       method: 'POST',
       headers: upstreamHeaders,
@@ -103,8 +92,6 @@ serve(async (req) => {
     const stream = new ReadableStream({
       async start(controller) {
         const reader = body.getReader()
-        const decoder = new TextDecoder()
-
         try {
           for (;;) {
             const { done, value } = await reader.read()
@@ -124,7 +111,7 @@ serve(async (req) => {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no',  // Disable Nginx buffering for SSE
+        'X-Accel-Buffering': 'no',
       },
     })
 
