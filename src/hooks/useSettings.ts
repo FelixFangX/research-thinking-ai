@@ -6,11 +6,13 @@ const SETTINGS_KEY = 'copilot_settings'
 export const API_DEFAULTS: Record<string, string> = {
   openai: 'https://api.openai.com/v1',
   anthropic: 'https://api.anthropic.com',
+  minimax: 'https://minimax.a7m.com.cn/v1',
 }
 
 export const MODEL_DEFAULTS: Record<string, string> = {
   openai: 'gpt-4o',
   anthropic: 'claude-sonnet-4-20250514',
+  minimax: 'MiniMax-M2.7-highspeed',
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -39,7 +41,7 @@ function validateSettings(raw: Record<string, unknown>): AppSettings {
       ? raw.defaultComplexity : DEFAULT_SETTINGS.defaultComplexity,
     defaultTimelineWeeks: typeof raw.defaultTimelineWeeks === 'number' && raw.defaultTimelineWeeks >= 1 && raw.defaultTimelineWeeks <= 52
       ? raw.defaultTimelineWeeks : DEFAULT_SETTINGS.defaultTimelineWeeks,
-    apiProvider: (raw.apiProvider === 'openai' || raw.apiProvider === 'anthropic')
+    apiProvider: (['openai', 'anthropic', 'minimax'].includes(raw.apiProvider as string))
       ? raw.apiProvider : DEFAULT_SETTINGS.apiProvider,
     apiBaseUrl: typeof raw.apiBaseUrl === 'string' ? raw.apiBaseUrl : DEFAULT_SETTINGS.apiBaseUrl,
     apiKey: '',
