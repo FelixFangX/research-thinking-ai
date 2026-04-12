@@ -974,6 +974,7 @@ export async function runTopicAgentWithProgress(
   locale: Locale,
   llmConfig?: LLMConfig | null,
   onThinking?: ThinkingCallback,
+  realEvidenceProvider?: () => Promise<EvidenceItem[]>,
 ): Promise<AgentRunResult> {
   const useLLM = Boolean(llmConfig?.apiKey)
 
@@ -986,7 +987,29 @@ export async function runTopicAgentWithProgress(
   })
 
   let evidence: EvidenceItem[]
-  if (useLLM && llmConfig) {
+  if (realEvidenceProvider) {
+    // Real OpenAlex API via Supabase Edge Function
+    onProgress({
+      id: 'retrieve',
+      name: t(locale, 'stg.retrieve'),
+      status: 'running',
+      detail: t(locale, 'stg.retrieve.start'),
+      progress: 0,
+    })
+    evidence = await realEvidenceProvider()
+    await emitLines(
+      [
+        t(locale, 'mock.ret.1'),
+        t(locale, 'mock.ret.2', { interest: input.researchInterest }),
+        t(locale, 'mock.ret.3', { domain: input.problemDomain }),
+        '',
+        t(locale, 'mock.ret.9', { n: evidence.length }),
+        t(locale, 'mock.ret.10', { t1: evidence.filter(e => e.tier === 'T1').length, t2: evidence.filter(e => e.tier === 'T2').length, t3: evidence.filter(e => e.tier === 'T3').length }),
+      ],
+      'retrieve',
+      onStream,
+    )
+  } else if (useLLM && llmConfig) {
     let buf = ''
     let thinkBuf = ''
     const raw = await streamLLM(retrieveMessages(input, locale), llmConfig, (chunk) => {
@@ -1011,7 +1034,6 @@ export async function runTopicAgentWithProgress(
         t(locale, 'mock.ret.4'),
         t(locale, 'mock.ret.5'),
         t(locale, 'mock.ret.6'),
-        t(locale, 'mock.ret.7'),
         '',
         t(locale, 'mock.ret.8'),
         t(locale, 'mock.ret.9', { n: evidence.length }),

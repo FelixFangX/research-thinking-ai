@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/functions/:path*",
+      "destination": "https://oicpdyxbgbftedhlhvjd.supabase.co/functions/v1/:path*"
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "@supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key"
+  }
+}
