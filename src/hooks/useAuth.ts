@@ -53,8 +53,8 @@ export function useAuth() {
     email: string,
     password: string,
     displayName: string,
-  ): Promise<'exists' | 'weakPw' | 'error' | null> => {
-    const { error } = await supabase.auth.signUp({
+  ): Promise<'exists' | 'weakPw' | 'error' | 'pending' | null> => {
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -67,7 +67,10 @@ export function useAuth() {
       if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('password')) return 'weakPw'
       return 'error'
     }
-    return null
+    // If session is returned, user is immediately authenticated (email confirmation disabled)
+    if (data.session) return null
+    // Otherwise email confirmation is required
+    return 'pending'
   }, [])
 
   const logout = useCallback(async () => {

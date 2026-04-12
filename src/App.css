@@ -990,6 +990,11 @@ tr:last-child td { border-bottom: none; }
   font-size: var(--font-sm);
 }
 
+.auth-success {
+  color: var(--accent);
+  font-size: var(--font-sm);
+}
+
 .auth-submit {
   width: 100%;
   border: 1px solid var(--accent);

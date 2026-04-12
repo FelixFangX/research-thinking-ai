@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { useI18n } from '../i18n'
 
-export type AuthErrorCode = 'notFound' | 'wrongPw' | 'nameTooShort' | 'pwTooShort' | 'exists' | 'invalid' | 'weakPw' | 'error'
+export type AuthErrorCode = 'notFound' | 'wrongPw' | 'nameTooShort' | 'pwTooShort' | 'exists' | 'invalid' | 'weakPw' | 'error' | 'pending'
 
 interface Props {
   onLogin: (email: string, password: string) => AuthErrorCode | null | Promise<AuthErrorCode | null>
@@ -96,12 +96,16 @@ export function AuthGate({ onLogin, onRegister }: Props) {
                 required
               />
             </label>
-            {error && (
+            {error === 'pending' ? (
+              <p className="auth-success">
+                {t('auth.success.pending')}
+              </p>
+            ) : error ? (
               <p className="auth-error">
                 {t('auth.error')} {t(`auth.err.${error}`)}
               </p>
-            )}
-            <button type="submit" className="auth-submit">
+            ) : null}
+            <button type="submit" className="auth-submit" disabled={error === 'pending'}>
               {mode === 'login' ? t('auth.submit.login') : t('auth.submit.register')}
             </button>
           </form>
