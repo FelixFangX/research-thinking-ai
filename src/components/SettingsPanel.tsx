@@ -74,6 +74,13 @@ export function SettingsPanel({ settings, userId, onUpdate, onReset, onClose }: 
                 >
                   ANTHROPIC
                 </button>
+                <button
+                  type="button"
+                  className={`scheme-btn ${settings.apiProvider === 'minimax' ? 'active' : ''}`}
+                  onClick={() => handleProviderChange('minimax')}
+                >
+                  MINIMAX
+                </button>
               </div>
             </div>
             <label className="settings-field">
@@ -123,7 +130,8 @@ export function SettingsPanel({ settings, userId, onUpdate, onReset, onClose }: 
               {settings.apiKey ? (
                 <span className="api-key-status">
                   {(settings.apiProvider === 'openai' && settings.apiKey.startsWith('sk-')) ||
-                  (settings.apiProvider === 'anthropic' && settings.apiKey.startsWith('sk-ant-'))
+                  (settings.apiProvider === 'anthropic' && settings.apiKey.startsWith('sk-ant-')) ||
+                  (settings.apiProvider === 'minimax' && settings.apiKey.length > 8)
                     ? t('cfg.keyOk')
                     : t('cfg.keyBad')}
                 </span>
