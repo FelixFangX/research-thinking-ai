@@ -62,7 +62,9 @@ export function useAuth() {
       },
     })
     if (error) {
-      if (error.message.includes('already')) return 'exists'
+      const msg = error.message ?? (error as unknown as { msg?: string }).msg ?? ''
+      if (msg.toLowerCase().includes('already')) return 'exists'
+      if (msg.toLowerCase().includes('weak') || msg.toLowerCase().includes('password')) return 'weakPw'
       return 'error'
     }
     return null

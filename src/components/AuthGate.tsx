@@ -11,7 +11,7 @@ interface Props {
 export function AuthGate({ onLogin, onRegister }: Props) {
   const { t } = useI18n()
   const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState<AuthErrorCode | ''>('')
@@ -22,8 +22,8 @@ export function AuthGate({ onLogin, onRegister }: Props) {
     void (async () => {
       const err =
         mode === 'login'
-          ? await onLogin(username, password)
-          : await onRegister(username, password, displayName)
+          ? await onLogin(email, password)
+          : await onRegister(email, password, displayName)
       if (err) setError(err)
     })()
   }
@@ -75,13 +75,13 @@ export function AuthGate({ onLogin, onRegister }: Props) {
               </label>
             )}
             <label className="auth-field">
-              <span className="auth-prompt">{t('auth.username')}</span>
+              <span className="auth-prompt">{t('auth.email')}</span>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={t('auth.username.ph')}
-                autoComplete="username"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('auth.email.ph')}
+                autoComplete="email"
                 required
               />
             </label>
