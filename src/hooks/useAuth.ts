@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { User } from '../types'
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js'
+
+type AuthErrorCode = 'notFound' | 'wrongPw' | 'nameTooShort' | 'pwTooShort' | 'exists'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)

@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { type AgentRunResult, type TopicInput } from '../types'
 
 interface SharedSession {

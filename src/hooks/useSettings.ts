@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AppSettings } from '../types'
+import type { AppSettings, ApiProvider } from '../types'
 
 const SETTINGS_KEY = 'copilot_settings'
 
@@ -42,7 +42,8 @@ function validateSettings(raw: Record<string, unknown>): AppSettings {
     defaultTimelineWeeks: typeof raw.defaultTimelineWeeks === 'number' && raw.defaultTimelineWeeks >= 1 && raw.defaultTimelineWeeks <= 52
       ? raw.defaultTimelineWeeks : DEFAULT_SETTINGS.defaultTimelineWeeks,
     apiProvider: (['openai', 'anthropic', 'minimax'].includes(raw.apiProvider as string))
-      ? raw.apiProvider : DEFAULT_SETTINGS.apiProvider,
+      ? raw.apiProvider as ApiProvider
+      : DEFAULT_SETTINGS.apiProvider,
     apiBaseUrl: typeof raw.apiBaseUrl === 'string' ? raw.apiBaseUrl : DEFAULT_SETTINGS.apiBaseUrl,
     apiKey: '',
     apiModel: typeof raw.apiModel === 'string' ? raw.apiModel : DEFAULT_SETTINGS.apiModel,
