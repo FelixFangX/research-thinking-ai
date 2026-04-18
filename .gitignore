@@ -25,3 +25,6 @@ dist-ssr
 
 # Interview prep (private)
 INTERVIEW_PREP.md
+
+# Cursor hooks state (local runtime data)
+.cursor/hooks/state/
