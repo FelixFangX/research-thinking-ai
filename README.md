@@ -1,108 +1,54 @@
-# Research Topic Agent
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/header-dark.svg">
+  <img alt="research-thinking-ai — Vague research interest in, evidence-backed directions out." src="./docs/assets/header-light.svg" width="100%">
+</picture>
 
-[中文文档](README.zh-CN.md)
+**An agent pipeline that turns a vague research interest into ranked, evidence-tiered research directions and a 7-day action plan.** [Live demo](https://research-thinking-ai.vercel.app) · English | [中文文档](./README.zh-CN.md)
 
-An AI-powered research topic selection system that transforms vague research interests into actionable, evidence-backed research directions. Built with React, TypeScript, and real-time LLM integration.
-
-## Features
-
-- **4-Stage Pipeline**: Literature Retrieval → Landscape Mapping → Path Comparison → Convergence
-- **Dual Participation Modes**: HIGH (step-by-step confirmation) / LOW (auto with post-hoc override)
-- **Multi-Provider LLM**: Supports OpenAI and Anthropic APIs with SSE streaming
-- **Evidence Governance**: Tiered source credibility (T1/T2/T3), conflict detection, citation tracking
-- **Complexity-Aware Routing**: Auto-selects architecture (Single Agent / Orchestrator / Multi-Agent / RAG / KG)
-- **Iteration Tracking**: 7-day action plan, research journal, run comparison
-- **Secure Key Storage**: API Key encrypted with AES-GCM via Web Crypto API; passwords hashed with SHA-256
-- **Subscription System**: Free / Pro tier paywall with export gating
-- **Boot Animation**: Pixel-art system boot sequence with logo reveal
-- **Session History**: Clickable history records stored in IndexedDB with full result replay
-- **Smart Auto-Scroll**: Follows pipeline progress, pauses on manual scroll
-- **No-LLM Guard**: Dialog prompt when API key is missing — configure, mock preview, or cancel
-- **i18n**: English and Chinese with IP-based auto-detection
-- **Full-Stack i18n**: All pipeline data, LLM prompts, mock data, and export reports are locale-aware (not just UI strings)
-- **API Connectivity Test**: Test LLM connection directly from settings
-- **Markdown + Data Visualization**: AI thinking rendered as Markdown; structured JSON results rendered as visual data cards (evidence cards, architecture diagrams, candidate metric bars, recommendation timelines)
-- **Collapsible Thinking Blocks**: Anthropic thinking_delta stream rendered in collapsible panels
-- **Auth Page Theme Toggle**: Language and theme switching available on the login page
-- **Theming**: Light/dark mode + 4 color schemes (CRT Green, Cyberpunk, Amber, Classic)
-- **Analytics**: PostHog integration for product metrics
-
-## Quick Start
+## Quickstart
 
 ```bash
-npm install
-npm run dev
+git clone https://github.com/FelixFangX/research-thinking-ai.git
+cd research-thinking-ai && pnpm install
+cp .env.example .env.local   # optional: Supabase + PostHog; leave empty to run locally
+pnpm dev                     # http://localhost:5173
 ```
 
-Open `http://localhost:5173` in your browser.
+Without an LLM key the app offers a **mock preview**. Add a key under `[CFG]` for real runs.
 
-## Configuration
+## Usage
 
-### LLM Provider
+1. Describe the interest, domain, seed idea and constraints.
+2. Pick a participation mode: **HIGH** (confirm each stage) or **LOW** (auto, override afterwards).
+3. Follow the four stages as they stream: Retrieval → Landscape → Path comparison → Convergence.
+4. Export the report or keep iterating. History stays in IndexedDB.
 
-Click `[CFG]` in the top bar to configure:
-- **Provider**: OpenAI or Anthropic
-- **API Base URL**: Supports OpenAI-compatible endpoints (DeepSeek, Moonshot, etc.)
-- **API Key**: Required for real LLM analysis; falls back to mock data if not configured
-- **Model**: Configurable model selection
-- **Remember Key**: Optional AES-GCM encrypted persistence across sessions
+LLM: OpenAI or Anthropic, or any OpenAI-compatible base URL (DeepSeek, Moonshot, local). With "Remember key" on, the key is AES-GCM encrypted in the browser.
 
-### Analytics (Optional)
+## How it works
 
-Create `.env.local`:
+```text
+TopicInput ─▶ assessComplexity ─▶ decideArchitecture ─▶ 4-stage pipeline ─▶ AgentRunResult
+                 (score 12–95)      single_agent │ workflow_orchestrator │
+                                    multi_agent │ rag_workflow │ kg_orchestrated
+                                                         │
+                                                  streamLLM (SSE) ── OpenAI / Anthropic / mock
+```
+
+| Seam | Where | What's tested |
+|---|---|---|
+| LLM output → data | `parseJSON` in `src/llm.ts` | plain, fenced, embedded JSON; rejects garbage and oversized input |
+| Routing | `assessComplexity` + `decideArchitecture` in `src/engine.ts` | topic → architecture mode, score bounds, rationale |
+
+Evidence is tiered T1/T2/T3 and conflicts are flagged before convergence. More detail: [`docs/SYSTEM_ARCHITECTURE.md`](./docs/SYSTEM_ARCHITECTURE.md).
+
+## Testing
 
 ```bash
-VITE_POSTHOG_KEY=phc_xxx
-VITE_POSTHOG_HOST=https://app.posthog.com
+pnpm test      # vitest
+pnpm build     # tsc -b + vite build
 ```
-
-## Architecture
-
-```
-React SPA (Vite + TypeScript)
-├── Pipeline Engine (4-stage orchestration)
-│   ├── Retrieval — multi-source literature search
-│   ├── Mapping — complexity assessment & architecture routing
-│   ├── Comparison — candidate path scoring
-│   └── Convergence — recommendation & action plan
-├── LLM Client (SSE streaming, multi-provider)
-├── IndexedDB Storage (sessions, iterations)
-├── Key Vault (AES-GCM encryption, PBKDF2 derivation)
-├── Auth Module (client-side, extensible)
-├── Subscription (Free/Pro paywall)
-├── i18n (context-based, IP auto-detection)
-├── Markdown Renderer (react-markdown + remark-gfm)
-└── Analytics (PostHog events)
-```
-
-See [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md) for the full production architecture design.
-
-## Project Structure
-
-```
-src/
-├── components/    # UI components (AuthGate, BootScreen, Paywall, NoLLMDialog, etc.)
-├── hooks/         # Custom React hooks (useAuth, useSettings, useHistory, useIteration, useToast)
-├── i18n/          # Internationalization (translations, detection, context)
-├── lib/           # Utilities (db.ts IndexedDB, keyVault.ts AES-GCM)
-├── engine.ts      # Pipeline orchestration engine
-├── llm.ts         # LLM client (OpenAI/Anthropic SSE)
-├── analytics.ts   # Event tracking
-├── blueprint.ts   # Product blueprint data
-├── types.ts       # TypeScript type definitions
-└── App.tsx        # Main application
-```
-
-## Tech Stack
-
-- **Framework**: React 19 + TypeScript + Vite 8
-- **State**: @tanstack/react-query
-- **Storage**: IndexedDB (via custom wrapper)
-- **Crypto**: Web Crypto API (AES-GCM, PBKDF2, SHA-256)
-- **Analytics**: posthog-js
-- **Fonts**: Press Start 2P (pixel), VT323 (terminal), Fira Code
-- **Markdown**: react-markdown + remark-gfm
 
 ## License
 
-MIT
+[MIT](./LICENSE)

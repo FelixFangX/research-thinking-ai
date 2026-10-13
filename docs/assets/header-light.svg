@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="200" viewBox="0 0 1200 200" role="img" aria-labelledby="t d" font-family="ui-sans-serif,-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif">
+<title id="t">research-thinking-ai</title>
+<desc id="d">Vague research interest in, evidence-backed directions out. Flow: interest → 4-stage agent → directions.</desc>
+<style>.flow{stroke-dasharray:5 6;animation:f 1.4s linear infinite}@keyframes f{to{stroke-dashoffset:-11}}@media (prefers-reduced-motion: reduce){*{animation:none!important}}</style>
+<rect class="bg" width="1200" height="200" fill="#ffffff"/>
+<rect width="1200" height="26" fill="#eef1f5"/><rect y="174" width="1200" height="26" fill="#eef1f5"/>
+<text x="40" y="17" fill="#6e7781" font-size="11" letter-spacing="3" font-family="ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace">AGENT CONTROL ROOM · AGENT LAYER · <tspan fill="#7c3aed">RESEARCH-THINKING-AI</tspan></text>
+<text x="1160" y="17" text-anchor="end" fill="#6e7781" font-size="11" letter-spacing="3" font-family="ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace">FELIXFANGX</text>
+<text x="40" y="96" fill="#1f2328" font-size="38" font-weight="800" letter-spacing="-0.5">research-thinking-ai</text>
+<text x="40" y="132" fill="#59636e" font-size="17">Vague research interest in, evidence-backed directions out.</text>
+<g data-step="interest"><rect x="642" y="78" width="150" height="44" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="717" y="105" text-anchor="middle" fill="#1f2328" font-size="13" font-family="ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace">interest</text></g><line class="flow" x1="796" y1="100" x2="822" y2="100" stroke="#7c3aed" stroke-width="2"/>
+<g data-step="4-stage agent"><rect x="826" y="78" width="150" height="44" rx="10" fill="#f6f8fa" stroke="#7c3aed"/>
+<text x="901" y="105" text-anchor="middle" fill="#7c3aed" font-size="13" font-family="ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace">4-stage agent</text></g><line class="flow" x1="980" y1="100" x2="1006" y2="100" stroke="#7c3aed" stroke-width="2"/>
+<g data-step="directions"><rect x="1010" y="78" width="150" height="44" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="1085" y="105" text-anchor="middle" fill="#1f2328" font-size="13" font-family="ui-monospace,SFMono-Regular,'JetBrains Mono',Menlo,Consolas,monospace">directions</text></g>
+</svg>
