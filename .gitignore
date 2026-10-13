@@ -28,3 +28,6 @@ INTERVIEW_PREP.md
 
 # Cursor hooks state (local runtime data)
 .cursor/hooks/state/
+
+# Supabase CLI local state (project ref, pooler host, versions)
+supabase/.temp/
