@@ -207,7 +207,7 @@ export function SharePage() {
       <footer className="share-footer">
         <p>
           Built with 🔬{' '}
-          <a href="https://github.com/ColeFang/research-thinking-ai" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/FelixFangX/research-thinking-ai" target="_blank" rel="noopener noreferrer">
             Research Topic Agent
           </a>
           {' '}|{' '}
