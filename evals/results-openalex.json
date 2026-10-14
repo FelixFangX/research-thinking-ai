@@ -5,6 +5,7 @@
   "schemaValidRate": 1,
   "structureOkRate": 1,
   "meanInterestCoverage": 0.95,
+  "meanEvidenceOnTopicRate": 0.875,
   "meanCitationVerifiedRate": 1,
   "runs": [
     {
@@ -12,6 +13,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 0.75,
+      "evidenceOnTopicRate": 0.5,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -22,6 +24,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -32,6 +35,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -42,6 +46,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 0.875,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -52,6 +57,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 0.875,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -62,6 +68,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -72,6 +79,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 0.625,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -82,6 +90,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -92,6 +101,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -102,6 +112,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 0.875,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -112,6 +123,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -122,6 +134,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -132,6 +145,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -142,6 +156,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -152,6 +167,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 0.5,
+      "evidenceOnTopicRate": 0.75,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -162,6 +178,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -172,6 +189,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -182,6 +200,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 0.75,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -192,6 +211,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 1,
+      "evidenceOnTopicRate": 1,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8
@@ -202,6 +222,7 @@
       "schemaValid": true,
       "structureOk": true,
       "interestCoverage": 0.75,
+      "evidenceOnTopicRate": 0.25,
       "citationVerifiedRate": 1,
       "citationStatuses": {
         "verified": 8

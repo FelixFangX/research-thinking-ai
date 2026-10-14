@@ -58,17 +58,18 @@ The weekly watch (`.github/workflows/weekly-watch.yml`, Mondays) runs each topic
 
 ## Eval
 
-20 sample interests ([`evals/interests.json`](./evals/interests.json)) run headless through the pipeline (`pnpm eval --mode <mode> --out ...`). Each run is scored on: all four stages match their schema, structure (≥3 paths, the selected path exists, evidence ids resolve), interest coverage (share of the interest's terms that appear in the evidence and paths), and **citations**: every evidence link is looked up in OpenAlex and counts as verified only if it resolves to a real work whose title matches.
+20 sample interests ([`evals/interests.json`](./evals/interests.json)) run headless through the pipeline (`pnpm eval --mode <mode> --out ...`). Each run is scored on: all four stages match their schema, structure (≥3 paths, the selected path exists, evidence ids resolve), interest coverage (share of the interest's terms that appear in the evidence and paths), **on-topic evidence** (share of evidence titles that mention ≥2 of the interest's key terms), and **citations**: every evidence link is looked up in OpenAlex and counts as verified only if it resolves to a real work whose title matches.
 
 Measured on 2026-10-14:
 
-| Mode | Schema valid | Structure OK | Interest coverage | Citations verified |
-|---|---|---|---|---|
-| `demo` (no key, templated) | 20/20 | 20/20 | 1.00* | **0%** (100 search-page links, 20 non-paper links) |
-| `openalex` (real evidence, deterministic stages) | 20/20 | 20/20 | 0.95 | **100%** (160/160) |
-| `llm` | not run yet (needs a key: `LLM_API_KEY=... pnpm eval --mode llm`) | | | |
+| Mode | Schema valid | Structure OK | Interest coverage | On-topic evidence | Citations verified |
+|---|---|---|---|---|---|
+| `demo` (no key, templated) | 20/20 | 20/20 | 1.00* | 0.34 | **0%** (100 search-page links, 20 non-paper links) |
+| `openalex` (real evidence, deterministic stages) | 20/20 | 20/20 | 0.95 | 0.88 | **100%** (160/160) |
+| `edge` (deployed `openalex-search` function, before #9 is deployed) | 20/20 | 20/20 | 0.26 | **0.06** | 100% |
+| `llm` | not run yet (needs a key: `LLM_API_KEY=... pnpm eval --mode llm`) | | | | |
 
-\* The demo template echoes the interest, so its coverage is trivially 1.0. Raw results: [`evals/`](./evals). Demo-mode evidence is illustrative only. It isn't a citation, and the eval says so.
+\* The demo template echoes the interest, so its coverage is trivially 1.0. Raw results: [`evals/`](./evals). Demo-mode evidence is illustrative only. It isn't a citation, and the eval says so. `edge` mode checks production: `SUPABASE_URL=... SUPABASE_ANON_KEY=... pnpm eval --mode edge`.
 
 ## Testing
 

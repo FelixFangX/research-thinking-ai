@@ -4,7 +4,7 @@ import { createDefaultInput } from '../src/engine'
 import { parseStage, CompareStage, RetrieveStage } from '../src/schemas'
 import { checkCitations, classifyUrl, type WorkResolver } from '../src/citations'
 import { searchOpenAlexEvidence } from '../src/evidence/openalex'
-import { scoreRun, summarizeEval } from '../src/evalScore'
+import { onTopicRate, scoreRun, summarizeEval } from '../src/evalScore'
 
 describe('runResearch: headless pipeline', () => {
   it('runs all four stages without a browser or a key', async () => {
@@ -85,3 +85,19 @@ describe('eval scoring', () => {
     expect(sum.meanCitationVerifiedRate).toBe(0.25)
   })
 })
+
+describe('evidence on-topic rate', () => {
+  it('counts titles that mention at least two key terms of the interest', () => {
+    const titles = [
+      'Graph Neural Networks for Molecular Drug Discovery',
+      'Deep Residual Learning for Image Recognition',
+      'A survey of drug repurposing with graph learning',
+    ]
+    expect(onTopicRate('Graph neural networks for drug discovery', titles)).toBe(0.667)
+  })
+
+  it('is 0 with no evidence', () => {
+    expect(onTopicRate('federated learning', [])).toBe(0)
+  })
+})
+

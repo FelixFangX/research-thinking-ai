@@ -1,5 +1,6 @@
 // Public eval: run the pipeline on evals/interests.json and score every run.
-//   pnpm eval --mode demo|openalex|llm [--json] [--out evals/results-<mode>.json]
+//   pnpm eval --mode demo|openalex|edge|llm [--json] [--out evals/results-<mode>.json]
+// edge mode calls the deployed openalex-search function (SUPABASE_URL, SUPABASE_ANON_KEY; the public anon key).
 // llm mode reads LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, LLM_PROVIDER from env (never printed).
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createDefaultInput } from '../src/engine'
@@ -11,7 +12,7 @@ import type { ApiProvider } from '../src/types'
 
 const args = process.argv.slice(2)
 const opt = (n: string, d?: string) => (args.includes(n) ? args[args.indexOf(n) + 1] : d)
-const mode = opt('--mode', 'demo') as 'demo' | 'openalex' | 'llm'
+const mode = opt('--mode', 'demo') as 'demo' | 'openalex' | 'edge' | 'llm'
 const interests = JSON.parse(readFileSync(new URL('../evals/interests.json', import.meta.url), 'utf8')) as Array<{
   researchInterest: string
   problemDomain: string
@@ -31,6 +32,22 @@ if (llm && !llm.apiKey) {
   process.exit(2)
 }
 
+const edgeUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
+const edgeKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
+if (mode === 'edge' && (!edgeUrl || !edgeKey)) {
+  console.error('edge mode needs SUPABASE_URL and SUPABASE_ANON_KEY')
+  process.exit(2)
+}
+const edgeEvidence = async (it: { researchInterest: string; problemDomain: string }) => {
+  const r = await fetch(`${edgeUrl}/functions/v1/openalex-search`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${edgeKey}`, apikey: edgeKey! },
+    body: JSON.stringify({ topic: it.researchInterest, domain: it.problemDomain, locale: 'en' }),
+  })
+  if (!r.ok) throw new Error(`edge function ${r.status}`)
+  return ((await r.json()) as { evidence: Awaited<ReturnType<typeof searchOpenAlexEvidence>> }).evidence
+}
+
 const resolver = openAlexResolver()
 const scores: Array<RunScore & { error?: string }> = []
 for (const it of interests) {
@@ -38,12 +55,12 @@ for (const it of interests) {
   try {
     const result = await runResearch(input, {
       llm,
-      evidence: mode === 'openalex' ? () => searchOpenAlexEvidence(input) : undefined,
+      evidence: mode === 'openalex' ? () => searchOpenAlexEvidence(input) : mode === 'edge' ? () => edgeEvidence(it) : undefined,
     })
     const citations = await checkCitations(result.evidence, resolver)
     scores.push(scoreRun(it.researchInterest, result, citations))
   } catch (e) {
-    scores.push({ interest: it.researchInterest, schemaValid: false, structureOk: false, interestCoverage: 0, citationVerifiedRate: 0, error: String((e as Error).message) })
+    scores.push({ interest: it.researchInterest, schemaValid: false, structureOk: false, interestCoverage: 0, evidenceOnTopicRate: 0, citationVerifiedRate: 0, error: String((e as Error).message) })
   }
   if (!args.includes('--json')) process.stderr.write('.')
 }
