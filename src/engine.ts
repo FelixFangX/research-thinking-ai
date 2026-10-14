@@ -15,8 +15,14 @@ import type {
   TopicInput,
   WorkflowStep,
 } from './types'
-import { streamLLM, parseJSON, type LLMConfig } from './llm'
+import { streamLLM, type LLMConfig } from './llm'
+import { parseStage, RetrieveStage, MapStage, CompareStage, ConvergeStage } from './schemas'
 import { t, type Locale } from './i18n'
+
+/** pace: false skips the typing animation (headless runs, evals, MCP). */
+export interface RunOptions {
+  pace?: boolean
+}
 
 export type StreamCallback = (stageId: string, text: string) => void
 export type ThinkingCallback = (stageId: string, text: string) => void
@@ -98,7 +104,7 @@ function normalizeWeights(weights: DecisionWeights): DecisionWeights {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, ms)
+    globalThis.setTimeout(resolve, ms)
   })
 }
 
@@ -107,10 +113,11 @@ async function emitLines(
   stageId: string,
   onStream: StreamCallback,
   buf = '',
+  pace = true,
 ): Promise<string> {
   let out = buf
   for (const line of lines) {
-    await delay(80 + Math.random() * 140)
+    if (pace) await delay(80 + Math.random() * 140)
     out += line + '\n'
     onStream(stageId, out)
   }
@@ -975,8 +982,11 @@ export async function runTopicAgentWithProgress(
   llmConfig?: LLMConfig | null,
   onThinking?: ThinkingCallback,
   realEvidenceProvider?: () => Promise<EvidenceItem[]>,
+  options: RunOptions = {},
 ): Promise<AgentRunResult> {
   const useLLM = Boolean(llmConfig?.apiKey)
+  const pace = options.pace !== false
+  const emit = (lines: string[], stageId: string, cb: StreamCallback) => emitLines(lines, stageId, cb, '', pace)
 
   onProgress({
     id: 'retrieve',
@@ -997,7 +1007,7 @@ export async function runTopicAgentWithProgress(
       progress: 0,
     })
     evidence = await realEvidenceProvider()
-    await emitLines(
+    await emit(
       [
         t(locale, 'mock.ret.1'),
         t(locale, 'mock.ret.2', { interest: input.researchInterest }),
@@ -1019,13 +1029,13 @@ export async function runTopicAgentWithProgress(
       thinkBuf += chunk
       onThinking('retrieve', thinkBuf)
     } : undefined)
-    evidence = parseJSON<{ evidence: EvidenceItem[] }>(raw).evidence
+    evidence = parseStage(RetrieveStage, raw).evidence
   } else {
     evidence = buildEvidence(input, locale)
     const tc: Record<string, number> = { T1: 0, T2: 0, T3: 0 }
     for (const e of evidence) tc[e.tier]++
     const conflicts = evidence.filter((e) => e.conflictsWith.length > 0)
-    await emitLines(
+    await emit(
       [
         t(locale, 'mock.ret.1'),
         t(locale, 'mock.ret.2', { interest: input.researchInterest }),
@@ -1078,13 +1088,13 @@ export async function runTopicAgentWithProgress(
       thinkBuf += chunk
       onThinking('map', thinkBuf)
     } : undefined)
-    const parsed = parseJSON<{ complexity: ComplexityAssessment; architecture: ArchitectureDecision }>(raw)
+    const parsed = parseStage(MapStage, raw)
     complexity = parsed.complexity
     architecture = parsed.architecture
   } else {
     complexity = assessComplexity(input, locale)
     architecture = decideArchitecture(input, complexity, locale)
-    await emitLines(
+    await emit(
       [
         t(locale, 'mock.map.1'),
         t(locale, 'mock.map.2'),
@@ -1128,14 +1138,14 @@ export async function runTopicAgentWithProgress(
       thinkBuf += chunk
       onThinking('compare', thinkBuf)
     } : undefined)
-    const parsed = parseJSON<{ candidates: CandidatePath[] }>(raw)
+    const parsed = parseStage(CompareStage, raw)
     candidates = parsed.candidates
       .map((c) => scoreCandidate(c, input.decisionWeights))
       .sort((a, b) => b.score - a.score)
   } else {
     candidates = buildCandidates(input, evidence, locale).sort((a, b) => b.score - a.score)
     const nw = normalizeWeights(input.decisionWeights)
-    await emitLines(
+    await emit(
       [
         t(locale, 'mock.cmp.1'),
         t(locale, 'mock.cmp.2'),
@@ -1184,12 +1194,12 @@ export async function runTopicAgentWithProgress(
       thinkBuf += chunk
       onThinking('converge', thinkBuf)
     } : undefined)
-    recommendation = parseJSON<{ recommendation: Recommendation }>(raw).recommendation
+    recommendation = parseStage(ConvergeStage, raw).recommendation
   } else {
     const topPath = candidates[0]
     const conflicts = evidence.filter((e) => e.conflictsWith.length > 0)
     recommendation = buildRecommendation(candidates, input.participationMode, locale)
-    await emitLines(
+    await emit(
       [
         t(locale, 'mock.cvg.1'),
         ...(conflicts.length > 0

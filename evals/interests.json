@@ -1,0 +1,22 @@
+[
+  {"researchInterest": "Interpretability of LLMs in educational feedback", "problemDomain": "Higher education learning analytics"},
+  {"researchInterest": "Graph neural networks for drug discovery", "problemDomain": "Molecular property prediction"},
+  {"researchInterest": "Federated learning with differential privacy", "problemDomain": "Hospital medical imaging"},
+  {"researchInterest": "Retrieval-augmented generation hallucination", "problemDomain": "Legal question answering"},
+  {"researchInterest": "Reinforcement learning for robot grasping", "problemDomain": "Warehouse automation"},
+  {"researchInterest": "Climate model downscaling with deep learning", "problemDomain": "Regional precipitation forecasting"},
+  {"researchInterest": "Fairness in credit scoring models", "problemDomain": "Consumer lending"},
+  {"researchInterest": "Speech recognition for low-resource languages", "problemDomain": "African languages"},
+  {"researchInterest": "Anomaly detection in industrial sensor time series", "problemDomain": "Predictive maintenance"},
+  {"researchInterest": "Protein structure prediction", "problemDomain": "Enzyme design"},
+  {"researchInterest": "Misinformation detection on social media", "problemDomain": "Public health communication"},
+  {"researchInterest": "Code generation with large language models", "problemDomain": "Software testing"},
+  {"researchInterest": "Knowledge graphs for recommender systems", "problemDomain": "E-commerce"},
+  {"researchInterest": "Self-supervised learning for satellite imagery", "problemDomain": "Land use classification"},
+  {"researchInterest": "Causal inference from observational data", "problemDomain": "Online advertising"},
+  {"researchInterest": "Energy-efficient neural network inference", "problemDomain": "Edge devices"},
+  {"researchInterest": "Multimodal emotion recognition", "problemDomain": "Mental health monitoring"},
+  {"researchInterest": "Traffic flow forecasting with spatiotemporal models", "problemDomain": "Urban mobility"},
+  {"researchInterest": "Automated essay scoring", "problemDomain": "Language assessment"},
+  {"researchInterest": "Adversarial robustness of image classifiers", "problemDomain": "Autonomous driving perception"}
+]

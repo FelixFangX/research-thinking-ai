@@ -1,0 +1,231 @@
+{
+  "mode": "demo",
+  "date": "2026-10-14",
+  "count": 20,
+  "schemaValidRate": 1,
+  "structureOkRate": 1,
+  "meanInterestCoverage": 1,
+  "meanCitationVerifiedRate": 0,
+  "runs": [
+    {
+      "interest": "Interpretability of LLMs in educational feedback",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Graph neural networks for drug discovery",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Federated learning with differential privacy",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Retrieval-augmented generation hallucination",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Reinforcement learning for robot grasping",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Climate model downscaling with deep learning",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Fairness in credit scoring models",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Speech recognition for low-resource languages",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Anomaly detection in industrial sensor time series",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Protein structure prediction",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Misinformation detection on social media",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Code generation with large language models",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Knowledge graphs for recommender systems",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Self-supervised learning for satellite imagery",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Causal inference from observational data",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Energy-efficient neural network inference",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Multimodal emotion recognition",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Traffic flow forecasting with spatiotemporal models",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Automated essay scoring",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    },
+    {
+      "interest": "Adversarial robustness of image classifiers",
+      "schemaValid": true,
+      "structureOk": true,
+      "interestCoverage": 1,
+      "citationVerifiedRate": 0,
+      "citationStatuses": {
+        "search-link": 5,
+        "unverified": 1
+      }
+    }
+  ]
+}
