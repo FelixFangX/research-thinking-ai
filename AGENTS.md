@@ -7,4 +7,5 @@
 - Edge functions in `supabase/functions/` are deployed separately (`supabase functions deploy`); changing the source doesn't change production. After deploying, run `pnpm eval --mode edge` to confirm. The query lives in `supabase/functions/openalex-search/query.ts` (tested).
 - Keys: never commit real keys. The UI stores user keys encrypted in the browser only.
 - Agent surfaces: `server/mcp.ts` (`createServer({ fetch, llm })`), `server/research.ts` (`propose`), `server/watch.ts`. All read-only; `pnpm typecheck:server` covers them.
+- The weekly watch must work without the digest (it's in a private repo): never add a token to read it. Use `DIGEST_URL` (public) or `--digest-dir`.
 - The weekly watch only writes files (`watch/out`, `watch/state`, both gitignored). Don't give it write permissions.

@@ -49,12 +49,13 @@ Evidence is tiered T1/T2/T3 and conflicts are flagged before convergence. More d
 
 ```bash
 pnpm mcp      # stdio MCP server: propose_directions(interest, domain?, evidence?) and expand(direction, interest)
-pnpm watch --digest-dir ../tech-news-digest/daily --json   # "what changed" notes in watch/out/
+pnpm watch --json                          # "what changed" notes in watch/out/ (OpenAlex only)
+pnpm watch --digest-dir <daily/> --json    # also use a local digest checkout
 ```
 
 MCP client config: `{"command": "pnpm", "args": ["--dir", "/abs/path/research-thinking-ai", "-s", "mcp"]}`. Both tools are read-only. Evidence comes from OpenAlex, and every citation carries its check result (`verified`, `not-found`, `broken`, `search-link`). Without `LLM_API_KEY` in the server's env the four stages run the deterministic engine, so directions are generic templates around real evidence. Set `LLM_API_KEY` (plus `LLM_BASE_URL`/`LLM_MODEL`) for model-written directions.
 
-The weekly watch (`.github/workflows/weekly-watch.yml`, Mondays) runs each topic in [`watch/topics.json`](./watch/topics.json) using the last 7 days of tech-news-digest `digest.json` plus OpenAlex. It re-ranks directions and publishes a "what changed" note as the job summary and an artifact. It never commits, comments or sends anything.
+The weekly watch (`.github/workflows/weekly-watch.yml`, Mondays) runs each topic in [`watch/topics.json`](./watch/topics.json) using OpenAlex, plus the last 7 days of `digest.json` when a digest source is available. The digest repo is private, so CI runs OpenAlex-only unless the `DIGEST_URL` repo variable points at a public copy. Each note and `status.json` record the digest as `off`, `unavailable`, `empty` or `ok`; a missing digest never fails the run. It re-ranks directions and publishes a "what changed" note as the job summary and an artifact. It never commits, comments or sends anything.
 
 ## Eval
 
