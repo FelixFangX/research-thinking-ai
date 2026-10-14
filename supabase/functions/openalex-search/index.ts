@@ -3,6 +3,7 @@
 // API docs: https://api.openalex.org
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { buildSearchQuery, openAlexSearchUrl, USER_AGENT } from './query.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,17 +62,6 @@ function classifyTier(work: OpenAlexWork): 'T1' | 'T2' | 'T3' {
   return 'T3'
 }
 
-function buildSearchQuery(topic: string, domain: string, seedIdea: string): string {
-  const keywords = [topic, domain, seedIdea]
-    .join(' ')
-    .replace(/[^\w\s-]/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(w => w.length > 2)
-    .slice(0, 8)
-  return keywords.join(' ')
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -88,12 +78,9 @@ serve(async (req) => {
     }
 
     const searchQuery = buildSearchQuery(topic, domain, seedIdea)
-    const encodedQuery = encodeURIComponent(searchQuery)
-
-    // Fetch from OpenAlex API
-    const openAlexUrl = `https://api.openalex.org/works?search=${encodedQuery}&per-page=12&sort=cited_by_count:desc`
+    const openAlexUrl = openAlexSearchUrl(searchQuery)
     const response = await fetch(openAlexUrl, {
-      headers: { 'User-Agent': 'Research-Topic-Agent/1.0 (https://github.com/ColeFang/research-thinking-ai)' },
+      headers: { 'User-Agent': USER_AGENT },
     })
 
     if (!response.ok) {
