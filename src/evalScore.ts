@@ -7,12 +7,27 @@ export interface RunScore {
   schemaValid: boolean
   structureOk: boolean
   interestCoverage: number
+  /** Share of evidence titles that mention the interest (≥2 of its key terms, or all if fewer). */
+  evidenceOnTopicRate: number
   citationVerifiedRate: number
   citationStatuses?: Record<string, number>
 }
 
 const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'into', 'using', 'based', 'via', 'of', 'in', 'on'])
 const terms = (t: string) => t.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2 && !STOP.has(w))
+
+const stem = (w: string) => (w.length > 4 && w.endsWith('s') ? w.slice(0, -1) : w)
+
+export function onTopicRate(interest: string, titles: string[]): number {
+  const want = [...new Set(terms(interest).map(stem))]
+  if (!titles.length || !want.length) return 0
+  const need = Math.min(2, want.length)
+  const hit = titles.filter((t) => {
+    const have = new Set(terms(t).map(stem))
+    return want.filter((w) => have.has(w)).length >= need
+  }).length
+  return Math.round((hit / titles.length) * 1000) / 1000
+}
 
 export function scoreRun(interest: string, r: AgentRunResult, citations: CitationReport): RunScore {
   const schemaValid =
@@ -30,7 +45,8 @@ export function scoreRun(interest: string, r: AgentRunResult, citations: Citatio
   const interestCoverage = want.length ? Math.round((want.filter((w) => text.includes(w)).length / want.length) * 1000) / 1000 : 0
   const citationStatuses: Record<string, number> = {}
   for (const i of citations.items) citationStatuses[i.status] = (citationStatuses[i.status] ?? 0) + 1
-  return { interest, schemaValid, structureOk, interestCoverage, citationVerifiedRate: citations.verifiedRate, citationStatuses }
+  const evidenceOnTopicRate = onTopicRate(interest, r.evidence.map((e) => e.title))
+  return { interest, schemaValid, structureOk, interestCoverage, evidenceOnTopicRate, citationVerifiedRate: citations.verifiedRate, citationStatuses }
 }
 
 const mean = (xs: number[]) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 1000) / 1000 : 0)
@@ -41,6 +57,7 @@ export function summarizeEval(scores: RunScore[]) {
     schemaValidRate: mean(scores.map((s) => (s.schemaValid ? 1 : 0))),
     structureOkRate: mean(scores.map((s) => (s.structureOk ? 1 : 0))),
     meanInterestCoverage: mean(scores.map((s) => s.interestCoverage)),
+    meanEvidenceOnTopicRate: mean(scores.map((s) => s.evidenceOnTopicRate)),
     meanCitationVerifiedRate: mean(scores.map((s) => s.citationVerifiedRate)),
   }
 }
