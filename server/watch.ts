@@ -3,9 +3,9 @@ import path from 'node:path'
 import type { EvidenceItem } from '../src/types'
 
 export interface DigestSource {
-  /** Local tech-news-digest daily/ directory, or */
+  /** Local digest daily/ directory (e.g. a checkout of the private tech-news-digest repo), or */
   dir?: string
-  /** Base URL serving <date>.json files (e.g. raw.githubusercontent.com/<owner>/tech-news-digest/master/daily) */
+  /** Base URL serving <date>.json files. Optional: the digest repo is private, so CI runs without it. */
   baseUrl?: string
   fetch?: typeof fetch
 }
@@ -26,7 +26,8 @@ function lastDays(today: string, n: number): string[] {
   return Array.from({ length: n }, (_, i) => new Date(end.getTime() - i * 86400000).toISOString().slice(0, 10))
 }
 
-async function readDay(src: DigestSource, day: string): Promise<DigestItem[]> {
+/** null = source unreachable (missing dir, HTTP error, network); [] = reachable but no file for that day. */
+async function readDay(src: DigestSource, day: string): Promise<DigestItem[] | null> {
   try {
     if (src.dir) {
       const files = await readdir(src.dir)
@@ -35,29 +36,52 @@ async function readDay(src: DigestSource, day: string): Promise<DigestItem[]> {
     }
     if (src.baseUrl) {
       const r = await (src.fetch ?? fetch)(`${src.baseUrl.replace(/\/$/, '')}/${day}.json`)
-      return r.ok ? ((await r.json()) as { items?: DigestItem[] }).items ?? [] : []
+      if (r.status === 404) return []
+      return r.ok ? ((await r.json()) as { items?: DigestItem[] }).items ?? [] : null
     }
   } catch {
-    return []
+    return null
   }
-  return []
+  return null
 }
 
-/** Papers from the last 7 days of digest.json that share at least half the topic's terms. */
-export async function collectDigestEvidence(src: DigestSource, topic: string, today: string, days = 7): Promise<EvidenceItem[]> {
+export type DigestStatus = 'off' | 'unavailable' | 'empty' | 'ok'
+
+export interface DigestResult {
+  /** off: no source configured; unavailable: source unreachable; empty: reachable, no digest files in range. */
+  status: DigestStatus
+  daysWithData: number
+  evidence: EvidenceItem[]
+}
+
+/** Papers from the last 7 days of digest.json that share at least half the topic's terms, plus how the source behaved. */
+export async function collectDigest(src: DigestSource, topic: string, today: string, days = 7): Promise<DigestResult> {
+  if (!src.dir && !src.baseUrl) return { status: 'off', daysWithData: 0, evidence: [] }
   const want = [...new Set(terms(topic))]
-  const out: EvidenceItem[] = []
+  const evidence: EvidenceItem[] = []
+  let reachable = 0
+  let daysWithData = 0
   for (const day of lastDays(today, days)) {
-    for (const it of await readDay(src, day)) {
+    const items = await readDay(src, day)
+    if (items === null) continue
+    reachable++
+    if (items.length) daysWithData++
+    for (const it of items) {
       if (it.category !== 'paper' || !it.url) continue
       const have = new Set(terms(`${it.title} ${it.text ?? ''} ${(it.tags ?? []).join(' ')}`))
       const hit = want.filter((w) => have.has(w)).length
       if (want.length && hit / want.length >= 0.5) {
-        out.push({ id: it.id, title: it.title, source: 'tech-news-digest', url: it.url, year: Number(day.slice(0, 4)), tier: 'T2', claim: `Surfaced by the daily digest on ${day}.`, relevance: 70, credibility: 70, conflictsWith: [] })
+        evidence.push({ id: it.id, title: it.title, source: 'tech-news-digest', url: it.url, year: Number(day.slice(0, 4)), tier: 'T2', claim: `Surfaced by the daily digest on ${day}.`, relevance: 70, credibility: 70, conflictsWith: [] })
       }
     }
   }
-  return out
+  const status: DigestStatus = !reachable ? 'unavailable' : daysWithData ? 'ok' : 'empty'
+  return { status, daysWithData, evidence }
+}
+
+/** Evidence only; see collectDigest for the source status. */
+export async function collectDigestEvidence(src: DigestSource, topic: string, today: string, days = 7): Promise<EvidenceItem[]> {
+  return (await collectDigest(src, topic, today, days)).evidence
 }
 
 export interface Snapshot {
@@ -77,8 +101,15 @@ export function diffDirections(prev: Snapshot | null, next: Snapshot) {
   return { moved, added, dropped, newEvidence }
 }
 
-export function renderWatchNote(topic: string, next: Snapshot, d: ReturnType<typeof diffDirections>): string {
-  const lines = [`# What changed: ${topic}`, '', `Week of ${next.date}.`, '', '## Directions (ranked)']
+const DIGEST_NOTE: Record<DigestStatus, string> = {
+  off: 'Digest: not configured; evidence from OpenAlex only.',
+  unavailable: 'Digest: unreachable this week; evidence from OpenAlex only.',
+  empty: 'Digest: reachable, but no digest files in the last 7 days.',
+  ok: 'Digest: included.',
+}
+
+export function renderWatchNote(topic: string, next: Snapshot, d: ReturnType<typeof diffDirections>, digest?: DigestStatus): string {
+  const lines = [`# What changed: ${topic}`, '', `Week of ${next.date}.${digest ? ` ${DIGEST_NOTE[digest]}` : ''}`, '', '## Directions (ranked)']
   next.directions.forEach((x, i) => lines.push(`${i + 1}. ${x.name} (score ${x.score})`))
   lines.push('', '## Changes')
   if (!d.moved.length && !d.added.length && !d.dropped.length) lines.push('- Ranking unchanged.')

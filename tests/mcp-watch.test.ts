@@ -5,7 +5,7 @@ import path from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { createServer } from '../server/mcp'
-import { collectDigestEvidence, diffDirections, renderWatchNote } from '../server/watch'
+import { collectDigest, collectDigestEvidence, diffDirections, renderWatchNote } from '../server/watch'
 
 // Fake OpenAlex: search returns two works, lookups resolve them.
 const works = [
@@ -67,6 +67,18 @@ describe('weekly watch', () => {
 
   it('works when there is no digest data', async () => {
     expect(await collectDigestEvidence({ dir: '/nonexistent' }, 'x', '2026-10-14')).toEqual([])
+  })
+
+  it('reports the digest as off, unavailable or empty instead of failing', async () => {
+    expect((await collectDigest({}, 'x', '2026-10-14')).status).toBe('off')
+    const denied = (async () => new Response('', { status: 401 })) as unknown as typeof fetch
+    expect(await collectDigest({ baseUrl: 'https://example.test/daily', fetch: denied }, 'x', '2026-10-14')).toEqual({ status: 'unavailable', daysWithData: 0, evidence: [] })
+    const down = (async () => { throw new Error('ENOTFOUND') }) as unknown as typeof fetch
+    expect((await collectDigest({ baseUrl: 'https://example.test/daily', fetch: down }, 'x', '2026-10-14')).status).toBe('unavailable')
+    const missing = (async () => new Response('', { status: 404 })) as unknown as typeof fetch
+    expect((await collectDigest({ baseUrl: 'https://example.test/daily', fetch: missing }, 'x', '2026-10-14')).status).toBe('empty')
+    const next = { date: '2026-10-14', directions: [{ id: 'a', name: 'A', score: 1 }], evidence: [] }
+    expect(renderWatchNote('x', next, diffDirections(null, next), 'unavailable')).toMatch(/OpenAlex only/)
   })
 
   it('diffs direction rankings and renders a what-changed note', () => {
