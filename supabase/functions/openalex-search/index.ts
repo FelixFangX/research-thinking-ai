@@ -12,6 +12,7 @@ const corsHeaders = {
 
 interface OpenAlexWork {
   id: string           // e.g. "W2893098453"
+  doi?: string | null  // e.g. "https://doi.org/10.1038/..."
   title: string
   publication_year: number
   primary_location?: {
@@ -141,7 +142,8 @@ serve(async (req) => {
         id: `E${index + 1}`,
         title,
         source: `OpenAlex | ${sourceName}`,
-        url: work.id.replace('https://openalex.org/', 'https://doi.org/'),
+        // Real DOI when present, else the OpenAlex work page (doi.org/W... never resolves).
+        url: work.doi || work.id,
         year,
         tier,
         claim,

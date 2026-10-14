@@ -39,14 +39,32 @@ TopicInput ─▶ assessComplexity ─▶ decideArchitecture ─▶ 4-stage pipe
 |---|---|---|
 | LLM output → data | `parseJSON` in `src/llm.ts` | plain, fenced, embedded JSON; rejects garbage and oversized input |
 | Routing | `assessComplexity` + `decideArchitecture` in `src/engine.ts` | topic → architecture mode, score bounds, rationale |
+| Stage schemas | `parseStage` in `src/schemas.ts` (zod) | coercion, errors name the stage and field |
+| Headless run | `runResearch` in `src/headless.ts` | full pipeline without UI, injectable evidence/LLM |
+| Citation check | `checkCitations` in `src/citations.ts` | verified / title-mismatch / not-found / broken / search-link |
 
 Evidence is tiered T1/T2/T3 and conflicts are flagged before convergence. More detail: [`docs/SYSTEM_ARCHITECTURE.md`](./docs/SYSTEM_ARCHITECTURE.md).
+
+## Eval
+
+20 sample interests ([`evals/interests.json`](./evals/interests.json)) run headless through the pipeline (`pnpm eval --mode <mode> --out ...`). Each run is scored on: all four stages match their schema, structure (≥3 paths, the selected path exists, evidence ids resolve), interest coverage (share of the interest's terms that appear in the evidence and paths), and **citations**: every evidence link is looked up in OpenAlex and counts as verified only if it resolves to a real work whose title matches.
+
+Measured on 2026-10-14:
+
+| Mode | Schema valid | Structure OK | Interest coverage | Citations verified |
+|---|---|---|---|---|
+| `demo` (no key, templated) | 20/20 | 20/20 | 1.00* | **0%** (100 search-page links, 20 non-paper links) |
+| `openalex` (real evidence, deterministic stages) | 20/20 | 20/20 | 0.95 | **100%** (160/160) |
+| `llm` | not run yet (needs a key: `LLM_API_KEY=... pnpm eval --mode llm`) | | | |
+
+\* The demo template echoes the interest, so its coverage is trivially 1.0. Raw results: [`evals/`](./evals). Demo-mode evidence is illustrative only. It isn't a citation, and the eval says so.
 
 ## Testing
 
 ```bash
 pnpm test      # vitest
 pnpm build     # tsc -b + vite build
+pnpm eval --mode demo --json   # offline eval; --mode openalex hits the public OpenAlex API
 ```
 
 ## License
