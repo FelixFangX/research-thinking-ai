@@ -6,3 +6,5 @@
 - LLM output must go through `parseStage`; don't add new `parseJSON<T>` casts.
 - Edge functions in `supabase/functions/` are deployed separately (`supabase functions deploy`); changing the source doesn't change production.
 - Keys: never commit real keys. The UI stores user keys encrypted in the browser only.
+- Agent surfaces: `server/mcp.ts` (`createServer({ fetch, llm })`), `server/research.ts` (`propose`), `server/watch.ts`. All read-only; `pnpm typecheck:server` covers them.
+- The weekly watch only writes files (`watch/out`, `watch/state`, both gitignored). Don't give it write permissions.
