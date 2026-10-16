@@ -1,122 +1,121 @@
-# UX / UI 设计交付规范
+# UX / UI Design Handoff Spec
 
-## 1. 信息架构（IA）
+## 1. Information architecture (IA)
 
-- 选题工作台
-  - Onboarding（高/低参与）
-  - Intake（输入 + 权重）
-  - Pipeline（阶段进度）
-  - Results（证据、比较、收敛）
-- 产品与 UX
-  - Persona、旅程、指标、策略
-- 架构与运维
-  - 服务拓扑、安全策略、发布计划
+- Topic workbench
+  - Onboarding (high / low involvement)
+  - Intake (input + weights)
+  - Pipeline (stage progress)
+  - Results (evidence, comparison, convergence)
+- Product and UX
+  - Personas, journeys, metrics, strategy
+- Architecture and operations
+  - Service topology, security policy, release plan
 
-## 2. 关键流程
+## 2. Key flows
 
-### 高参与流程
-1. 用户填写输入
-2. 每阶段显示自动动作与阶段结果
-3. 到收敛阶段时触发人工确认门
-4. 全部确认后允许“采用推荐路径”
+### High-involvement flow
+1. The user fills in the input
+2. Each stage shows its automatic actions and stage results
+3. A human confirmation gate is triggered at the convergence stage
+4. "Adopt recommended path" is enabled only after every item is confirmed
 
-### 低参与流程
-1. 用户填写输入
-2. 系统自动运行全流程
-3. 输出推荐
-4. 用户可在后纠偏模块改选路径并提交备注
+### Low-involvement flow
+1. The user fills in the input
+2. The system runs the whole pipeline automatically
+3. A recommendation is output
+4. In the post-hoc correction module, the user can pick a different path and add a note
 
-### 冲突证据回退流程
-1. 冲突检测触发
-2. UI 显示冲突 Evidence IDs
-3. 阻止自动终局
-4. 用户执行人工复核后继续
+### Conflicting-evidence fallback flow
+1. Conflict detection fires
+2. The UI shows the conflicting Evidence IDs
+3. The automatic final answer is blocked
+4. The user performs a manual review, then continues
 
-## 3. 页面状态规范
+## 3. Page states
 
-- Empty：无历史会话时引导首次运行
-- Loading：阶段进度可见，避免黑盒等待
-- Error：给出重试建议与输入纠偏提示
-- Success：输出推荐与下一步行动
+- Empty: when there are no past sessions, guide the user through the first run
+- Loading: stage progress is visible, so the wait never feels like a black box
+- Error: offer retry suggestions and hints for correcting the input
+- Success: show the recommendation and next actions
 
-## 4. 组件规范
+## 4. Components
 
 - `PipelineItem`
-  - 状态：idle/running/done/error
-  - 字段：name / detail / progress
+  - States: idle/running/done/error
+  - Fields: name / detail / progress
 
 - `EvidenceTable`
-  - 必含：来源分级、相关性、可信度、冲突标记
-  - 点击源链接触发埋点
+  - Required: source tier, relevance, credibility, conflict flag
+  - Clicking a source link fires an analytics event
 
 - `PathComparisonTable`
-  - 固定字段：新颖性/可行性/影响力/风险/证据覆盖/综合分/置信度
-  - 支持高亮当前选择路径
+  - Fixed columns: novelty / feasibility / impact / risk / evidence coverage / overall score / confidence
+  - Highlights the currently selected path
 
 - `HumanGateChecklist`
-  - 高参与模式下硬门
-  - 未全部确认时禁用最终采用
+  - Hard gate in high-involvement mode
+  - Final adoption is disabled until every item is confirmed
 
-## 5. 可访问性
+## 5. Accessibility
 
-- 所有交互元素可键盘访问
-- 颜色不作为唯一状态表达
-- 表格在窄屏允许横向滚动
-- 输入组件具备 label
+- Every interactive element is keyboard-accessible
+- Color is never the only indicator of state
+- Tables scroll horizontally on narrow screens
+- Every input has a label
 
-## 6. 视觉与交互原则
+## 6. Visual and interaction principles
 
-- 信息优先：复杂问题先结构化，再视觉化
-- 风险可见：冲突、低可信来源高亮提醒
-- 透明决策：每个结论都可回溯证据
-- 可纠偏：永远给人工 override 通道
+- Information first: structure complex problems before visualizing them
+- Visible risk: highlight conflicts and low-credibility sources
+- Transparent decisions: every conclusion traces back to evidence
+- Correctable: always provide a human override
 
-## 7. 开机与认证流程
+## 7. Boot and auth flow
 
 ### Boot Screen
-1. 像素风系统启动序列（10 行日志逐行打印 + 进度条）
-2. Logo 揭示动画（光晕脉冲 + 粒子效果）
-3. 过渡到 Auth 页面
+1. Pixel-style system boot sequence (10 log lines printed one by one + progress bar)
+2. Logo reveal animation (glow pulse + particle effect)
+3. Transition to the Auth page
 
 ### Auth Gate
-- 终端风格登录/注册表单
-- 自定义 Logo + 品牌名 "Research Topic Agent v1.0"
-- 支持登录/注册切换
+- Terminal-style sign-in / sign-up form
+- Custom logo + product name "Research Topic Agent v1.0"
+- Toggle between sign-in and sign-up
 
-## 8. 订阅与导出
+## 8. Subscription and export
 
 ### Paywall
-- Free / Pro 双栏对比
-- Free：完整 Pipeline、Mock 数据、8 次历史、i18n、主题
-- Pro：Markdown/PDF 导出、无限 LLM 调用、优先支持、运行对比、团队协作
-- 导出按钮在 Free 下显示 [PRO] 标签，点击弹出订阅墙
+- Free / Pro side-by-side comparison
+- Free: full pipeline, Mock data, 8 history entries, i18n, themes
+- Pro: Markdown/PDF export, unlimited LLM calls, priority support, run comparison, team collaboration
+- On Free, export buttons show a [PRO] tag; clicking one opens the paywall
 
 ### No-LLM Guard
-- 未配置 API Key 时点击运行弹窗
-- 三按钮：前往配置 / Mock 预览 / 取消
+- Clicking Run without an API key configured opens a dialog
+- Three buttons: Go to settings / Mock preview / Cancel
 
-## 9. 会话与持久化
+## 9. Sessions and persistence
 
-- 会话记录存储于 IndexedDB（无大小限制）
-- 侧边栏历史列表可点击回放完整结果
-- 迭代计划同样持久化到 IndexedDB
-- 自动从 localStorage 迁移历史数据
+- Session records are stored in IndexedDB (no size limit)
+- The sidebar history list replays the full result on click
+- Iteration plans are also persisted to IndexedDB
+- Legacy data is migrated from localStorage automatically
 
-## 10. 滚动与导航
+## 10. Scrolling and navigation
 
-- Pipeline 运行期间自动跟随最新内容
-- 用户手动滚动时暂停自动跟随
-- 固定快速导航锚点（输入、思考、架构、证据、路径）
+- While the pipeline runs, the view follows the latest content
+- Auto-follow pauses when the user scrolls manually
+- Fixed quick-navigation anchors (input, thinking, architecture, evidence, paths)
 
-## 11. Auth 页面
+## 11. Auth page
 
-- 登录 / 注册（Auth Gate）页面提供**浮动工具栏**：主题切换（浅色 / 深色）与语言切换（中 / 英）。
-- 工具栏为**固定定位**，位于视口**右上角**，不随表单滚动消失，便于在认证流程中随时调整外观与语言。
+- The sign-in / sign-up (Auth Gate) page has a **floating toolbar**: theme toggle (light / dark) and language toggle (Chinese / English).
+- The toolbar is **fixed** to the **top-right corner** of the viewport and does not scroll away with the form, so appearance and language can be changed at any point during auth.
 
-## 12. AI 思考过程可视化
+## 12. AI thinking visualization
 
-- **`StreamPanel`**：按 Pipeline 展示 **4 个阶段**，支持阶段间**步骤导航**（可在各阶段间切换查看）。
-- **每个阶段**：**可折叠的 Markdown 思考区**（流式/汇总文本）+ **结构化 DataCards**（该阶段的核心结构化数据）。
-- **收敛阶段（Convergence）**：**推荐卡片**（含编号理由列表）、**7 日计划的纵向时间线**、**确认项卡片（confirmations）**等与终局决策相关的专用布局。
-- **Anthropic**：`thinking_delta` 类思考内容在独立的**可折叠 `ThinkingBlock`** 中渲染，与主回答/结构化区块分离，避免与常规 `content` 流混淆。
-
+- **`StreamPanel`**: shows the pipeline's **4 stages**, with **step navigation** between stages (switch to view any stage).
+- **Each stage**: a **collapsible Markdown thinking area** (streamed / summary text) + **structured DataCards** (the stage's core structured data).
+- **Convergence stage**: dedicated layouts for the final decision, including the **recommendation card** (with a numbered list of reasons), a **vertical timeline for the 7-day plan**, and **confirmation cards**.
+- **Anthropic**: `thinking_delta` reasoning content renders in a separate **collapsible `ThinkingBlock`**, kept apart from the main answer and structured blocks so it is not confused with the regular `content` stream.
