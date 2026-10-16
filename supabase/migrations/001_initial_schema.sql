@@ -46,7 +46,7 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ============================================================
--- 2. public.sessions (核心选题Session)
+-- 2. public.sessions (core topic-selection sessions)
 -- ============================================================
 create table public.sessions (
   id uuid primary key default gen_random_uuid(),
@@ -96,7 +96,7 @@ create trigger sessions_updated_at
   for each row execute procedure public.update_updated_at();
 
 -- ============================================================
--- 3. public.evidence_items (证据条目)
+-- 3. public.evidence_items (evidence items)
 -- ============================================================
 create table public.evidence_items (
   id uuid primary key default gen_random_uuid(),
@@ -140,7 +140,7 @@ create policy "Evidence: delete from own sessions"
   ));
 
 -- ============================================================
--- 4. public.candidates (候选路径)
+-- 4. public.candidates (candidate paths)
 -- ============================================================
 create table public.candidates (
   id uuid primary key default gen_random_uuid(),
@@ -180,7 +180,7 @@ create policy "Candidates: insert for own sessions"
   ));
 
 -- ============================================================
--- 5. public.iterations (选题追踪)
+-- 5. public.iterations (topic iteration tracking)
 -- ============================================================
 create table public.iterations (
   id uuid primary key default gen_random_uuid(),
@@ -209,7 +209,7 @@ create trigger iterations_updated_at
   for each row execute procedure public.update_updated_at();
 
 -- ============================================================
--- 6. public.usage (使用量统计 for Free/Pro limits)
+-- 6. public.usage (usage stats for Free/Pro limits)
 -- ============================================================
 create table public.usage (
   id uuid primary key default gen_random_uuid(),
@@ -228,7 +228,7 @@ create policy "Usage: system records usage"
   on public.usage for insert with check (auth.uid() = user_id);
 
 -- ============================================================
--- 7. public.share_tokens (无账号分享的临时访问Token)
+-- 7. public.share_tokens (temporary access tokens for account-free sharing)
 -- ============================================================
 create table public.share_tokens (
   token text primary key,

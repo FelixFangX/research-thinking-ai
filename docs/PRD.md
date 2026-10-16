@@ -1,70 +1,70 @@
 # Research Topic Agent PRD
 
-## 1. 产品目标
+## 1. Product goals
 
-面向科研人群提供一个 `选题前决策系统`，把“模糊兴趣”转为“可执行选题路径”。
+Give researchers a `pre-topic decision system` that turns a "vague interest" into an "actionable research path".
 
-核心目标：
-- 在 20 分钟内形成 3 条候选路径并给出推荐。
-- 每条推荐必须可追溯证据、可被人工复核、可被实验否证。
-- 对用户而言是“决策增强器”，不是“替代科研判断”的黑箱。
+Core goals:
+- Produce 3 candidate paths and a recommendation within 20 minutes.
+- Every recommendation must be traceable to evidence, reviewable by a human, and falsifiable by experiment.
+- For the user it is a "decision amplifier", not a black box that "replaces research judgment".
 
-## 2. 用户细分与 JTBD
+## 2. User segments and JTBD
 
-- 研一/博一：需要快速建立方向感，避免开题后大幅返工。
-- 课题组新人：需要在导师约束下快速定位可起步方向。
-- 独立研究者：需要资源受限下的高质量方向筛选。
+- First-year master's / PhD students: need a sense of direction fast, to avoid major rework after the proposal.
+- New lab members: need to find a direction they can start on quickly, within their advisor's constraints.
+- Independent researchers: need high-quality direction screening with limited resources.
 
 JTBD:
-- 当我只有兴趣和一些零散想法时，我想快速得到可比较的方向路径，以便我能在组会或开题前做出可辩护选择。
+- When I only have an interest and some scattered ideas, I want comparable direction paths quickly, so that I can make a defensible choice before a group meeting or my proposal defense.
 
-## 3. 范围收敛
+## 3. Scope
 
 ### In Scope
-- 研究兴趣输入与约束建模
-- 文献检索与证据池构建
-- 候选路径比较（新颖性/可行性/影响力/风险/证据）
-- 收敛推荐与 7 天行动计划
-- 高参与与低参与两种交互模式
+- Research interest input and constraint modeling
+- Literature retrieval and evidence pool construction
+- Candidate path comparison (novelty / feasibility / impact / risk / evidence)
+- Converged recommendation and a 7-day action plan
+- Two interaction modes: high involvement and low involvement
 
 ### Out of Scope
-- 论文全文写作
-- 长周期实验管理平台
-- 通用学术搜索引擎替代
+- Writing full papers
+- A long-running experiment management platform
+- Replacing general academic search engines
 
-## 4. 关键功能
+## 4. Key features
 
-1. **模式选择**
-   - 高参与：逐步人工确认门
-   - 低参与：自动跑完全流程，终局后纠偏
+1. **Mode selection**
+   - High involvement: human confirmation gates at each step
+   - Low involvement: runs the whole pipeline automatically; the user corrects course at the end
 
-2. **复杂度感知路由**
-   - 输入复杂度评估 -> 自动选择架构：
-   - 单 Agent / 工作流编排 / 多 Agent / RAG / 知识图谱
+2. **Complexity-aware routing**
+   - Assess input complexity -> automatically choose an architecture:
+   - Single agent / workflow orchestration / multi-agent / RAG / knowledge graph
 
-3. **证据治理**
-   - 来源分级：T1/T2/T3
-   - 引用模板标准化
-   - 冲突证据硬门（未解冲突不得自动终局）
+3. **Evidence governance**
+   - Source tiers: T1/T2/T3
+   - Standardized citation template
+   - Hard gate on conflicting evidence (no automatic final answer while conflicts are unresolved)
 
-4. **决策输出**
-   - 候选路径评分矩阵
-   - 推荐路径 + 备选路径 + 可证伪实验 + 止损条件
+4. **Decision output**
+   - Scoring matrix for candidate paths
+   - Recommended path + fallback paths + falsifiable experiments + stop-loss conditions
 
-## 5. 非功能性要求
+## 5. Non-functional requirements
 
-- 可用性：桌面优先，移动端可用
-- 性能：首屏 < 2s，关键交互 < 200ms（不含 LLM）
-- 可追溯：所有关键决策有 Evidence ID
-- 安全：最小化敏感数据上传，审计日志可回放
-- 可观测：产品与 AI 双指标均可观测
+- Usability: desktop first, usable on mobile
+- Performance: first screen < 2s, key interactions < 200ms (excluding LLM calls)
+- Traceability: every key decision has an Evidence ID
+- Security: minimize upload of sensitive data; audit logs can be replayed
+- Observability: both product and AI metrics are observable
 
-## 6. 北极星指标与守护指标
+## 6. North star and guardrail metrics
 
-北极星：
+North star:
 - `accepted_recommendation_within_24h`
 
-守护指标：
+Guardrail metrics:
 - Hallucination Incident Rate
-- 冲突检测召回率
-- 人工纠偏率（过低或过高都说明系统偏移）
+- Conflict detection recall
+- Human correction rate (too low or too high both indicate the system has drifted)
