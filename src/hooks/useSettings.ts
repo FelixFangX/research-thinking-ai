@@ -4,12 +4,14 @@ import type { AppSettings, ApiProvider } from '../types'
 const SETTINGS_KEY = 'copilot_settings'
 
 export const API_DEFAULTS: Record<string, string> = {
+  free: '',
   openai: 'https://api.openai.com/v1',
   anthropic: 'https://api.anthropic.com',
   minimax: 'https://minimax.a7m.com.cn/v1',
 }
 
 export const MODEL_DEFAULTS: Record<string, string> = {
+  free: '@cf/zai-org/glm-4.7-flash',
   openai: 'gpt-4o',
   anthropic: 'claude-sonnet-4-20250514',
   minimax: 'MiniMax-M2.7-highspeed',
@@ -22,14 +24,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultMode: 'high',
   defaultComplexity: 3,
   defaultTimelineWeeks: 8,
-  apiProvider: 'openai',
-  apiBaseUrl: API_DEFAULTS.openai,
+  apiProvider: 'free',
+  apiBaseUrl: API_DEFAULTS.free,
   apiKey: '',
-  apiModel: MODEL_DEFAULTS.openai,
+  apiModel: MODEL_DEFAULTS.free,
 }
 
 function validateSettings(raw: Record<string, unknown>): AppSettings {
-  return {
+  return normalizeFree({
     ...DEFAULT_SETTINGS,
     colorScheme: (['crt-green', 'cyberpunk', 'amber', 'classic'].includes(raw.colorScheme as string)
       ? raw.colorScheme : DEFAULT_SETTINGS.colorScheme) as AppSettings['colorScheme'],
@@ -41,13 +43,13 @@ function validateSettings(raw: Record<string, unknown>): AppSettings {
       ? raw.defaultComplexity : DEFAULT_SETTINGS.defaultComplexity,
     defaultTimelineWeeks: typeof raw.defaultTimelineWeeks === 'number' && raw.defaultTimelineWeeks >= 1 && raw.defaultTimelineWeeks <= 52
       ? raw.defaultTimelineWeeks : DEFAULT_SETTINGS.defaultTimelineWeeks,
-    apiProvider: (['openai', 'anthropic', 'minimax'].includes(raw.apiProvider as string))
+    apiProvider: (['free', 'openai', 'anthropic', 'minimax'].includes(raw.apiProvider as string))
       ? raw.apiProvider as ApiProvider
       : DEFAULT_SETTINGS.apiProvider,
     apiBaseUrl: typeof raw.apiBaseUrl === 'string' ? raw.apiBaseUrl : DEFAULT_SETTINGS.apiBaseUrl,
     apiKey: '',
     apiModel: typeof raw.apiModel === 'string' ? raw.apiModel : DEFAULT_SETTINGS.apiModel,
-  }
+  })
 }
 
 function applyToDocument(s: AppSettings) {
@@ -86,7 +88,7 @@ export function useSettings() {
   }, [settings])
 
   const updateSettings = useCallback((partial: Partial<AppSettings>) => {
-    setState((prev) => ({ ...prev, ...partial }))
+    setState((prev) => normalizeFree({ ...prev, ...partial }))
   }, [])
 
   const resetSettings = useCallback(() => {
@@ -94,4 +96,9 @@ export function useSettings() {
   }, [])
 
   return { settings, updateSettings, resetSettings } as const
+}
+
+function normalizeFree(settings: AppSettings): AppSettings {
+  if (settings.apiProvider !== 'free') return settings
+  return { ...settings, apiBaseUrl: '', apiModel: ['@cf/zai-org/glm-4.7-flash', '@cf/google/gemma-4-26b-a4b-it'].includes(settings.apiModel) ? settings.apiModel : MODEL_DEFAULTS.free }
 }

@@ -16,6 +16,7 @@ export interface LLMConfig {
   baseUrl: string
   apiKey: string
   model: string
+  onUsage?: (neurons: number) => void
 }
 
 interface ChatMessage {
@@ -49,6 +50,7 @@ export async function streamLLM(
   onToken: (token: string) => void,
   onThinking?: (token: string) => void,
 ): Promise<string> {
+  if (config.provider === 'free') return streamFree(messages, config, onToken)
   if (!config.apiKey) throw new Error('API_KEY_MISSING')
   return config.provider === 'anthropic'
     ? streamAnthropic(messages, config, { onToken, onThinking })
@@ -56,6 +58,14 @@ export async function streamLLM(
 }
 
 export async function testConnection(config: LLMConfig): Promise<{ ok: boolean; message: string }> {
+  if (config.provider === 'free') {
+    try {
+      const res = await fetch(`${config.baseUrl.replace(/\/$/, '')}/api/status`)
+      if (!res.ok) return { ok: false, message: `API ${res.status}` }
+      const { quota } = await res.json()
+      return { ok: true, message: `Remaining quota: ${quota.ipRemaining} neurons (global: ${quota.globalRemaining})` }
+    } catch { return { ok: false, message: 'Network error' } }
+  }
   if (!config.apiKey) return { ok: false, message: 'API_KEY_MISSING' }
   try {
     if (config.provider === 'anthropic') {
@@ -244,4 +254,57 @@ async function streamAnthropic(
     }
   }
   return fullText
+}
+
+export function isLLMConfigured(config?: LLMConfig | null): boolean {
+  return config?.provider === 'free' || Boolean(config?.apiKey)
+}
+export class QuotaError extends Error {
+  kind: 'quota_exhausted' | 'rate_limited'
+  scope?: 'global' | 'ip'
+  resetsAt?: string
+  retryAfter?: number
+  constructor(kind: 'quota_exhausted' | 'rate_limited', details: { scope?: 'global' | 'ip'; resetsAt?: string; retryAfter?: number } = {}) {
+    super(kind === 'quota_exhausted' ? 'FREE_QUOTA_EXHAUSTED' : 'FREE_RATE_LIMITED')
+    this.kind = kind
+    this.name = 'QuotaError'
+    Object.assign(this, details)
+  }
+}
+async function streamFree(messages: ChatMessage[], config: LLMConfig, onToken: (token: string) => void): Promise<string> {
+  const res = await fetch(`${config.baseUrl.replace(/\/$/, '')}/api/llm`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: config.model, messages, max_tokens: 3072 }),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    if (res.status === 429) {
+      let data
+      try { data = JSON.parse(text) } catch { /* report the original HTTP error below */ }
+      if (data?.error === 'quota_exhausted' || data?.error === 'rate_limited') throw new QuotaError(data.error, { scope: data.scope, resetsAt: data.resetsAt, retryAfter: data.retryAfter })
+    }
+    throw new Error(`API ${res.status}: ${text.slice(0, 200)}`)
+  }
+  if (!res.body) throw new Error('Missing response stream')
+  const reader = res.body.getReader(), decoder = new TextDecoder()
+  let buffer = '', output = ''
+  const line = (s: string) => {
+    if (!s.trim().startsWith('data:')) return
+    const payload = s.trim().slice(5).trim()
+    if (payload === '[DONE]') return
+    let data
+    try { data = JSON.parse(payload) } catch { return }
+    const content = data.choices?.[0]?.delta?.content
+    if (typeof content === 'string') { output += content; onToken(content) }
+    if (typeof data.usage?.neurons === 'number') config.onUsage?.(data.usage.neurons)
+  }
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n'); buffer = lines.pop() ?? ''
+    lines.forEach(line)
+  }
+  buffer += decoder.decode(); if (buffer) line(buffer)
+  return output
 }

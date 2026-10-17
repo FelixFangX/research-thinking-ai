@@ -174,7 +174,7 @@ export interface User {
 
 export type ColorScheme = 'crt-green' | 'cyberpunk' | 'amber' | 'classic'
 
-export type ApiProvider = 'openai' | 'anthropic' | 'minimax'
+export type ApiProvider = 'free' | 'openai' | 'anthropic' | 'minimax'
 
 export type IterationStatus = 'active' | 'completed' | 'abandoned'
 

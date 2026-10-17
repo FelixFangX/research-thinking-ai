@@ -34,9 +34,13 @@ export async function searchOpenAlexEvidence(
   input: Pick<TopicInput, 'researchInterest' | 'problemDomain' | 'seedIdea'>,
   fetchImpl: typeof fetch = fetch,
   limit = 8,
+  options: { mailto?: string; apiKey?: string; userAgent?: string } = {},
 ): Promise<EvidenceItem[]> {
   const q = encodeURIComponent(buildQuery(input))
-  const r = await fetchImpl(`https://api.openalex.org/works?search=${q}&per-page=${limit}&sort=relevance_score:desc`)
+  const params = new URLSearchParams()
+  if (options.mailto) params.set("mailto", options.mailto)
+  if (options.apiKey) params.set("api_key", options.apiKey)
+  const r = await fetchImpl(`https://api.openalex.org/works?search=${q}&per-page=${limit}&sort=relevance_score:desc&select=id,doi,title,publication_year,cited_by_count,primary_location${params.size ? `&${params}` : ""}`, options.userAgent ? { headers: { "User-Agent": options.userAgent } } : undefined)
   if (!r.ok) throw new Error(`OpenAlex ${r.status}`)
   const works = ((await r.json()) as { results?: Work[] }).results ?? []
   return works.slice(0, limit).map((w, i) => {

@@ -12,7 +12,11 @@
     "eval": "tsx scripts/eval.ts",
     "mcp": "tsx server/mcp.ts",
     "watch": "tsx scripts/watch.ts",
-    "typecheck:server": "tsc -p tsconfig.server.json --noEmit"
+    "typecheck:server": "tsc -p tsconfig.server.json --noEmit",
+    "build:worker-check": "tsc -p worker/tsconfig.json --noEmit",
+    "typecheck:worker": "tsc -p worker/tsconfig.json --noEmit",
+    "deploy": "pnpm build && npx wrangler@3 deploy",
+    "db:migrate": "npx wrangler@3 d1 migrations apply research-thinking --remote"
   },
   "dependencies": {
     "@fontsource/fira-code": "^5.3.0",

@@ -15,7 +15,7 @@ import type {
   TopicInput,
   WorkflowStep,
 } from './types'
-import { streamLLM, type LLMConfig } from './llm'
+import { isLLMConfigured, streamLLM, type LLMConfig } from './llm'
 import { parseStage, RetrieveStage, MapStage, CompareStage, ConvergeStage } from './schemas'
 import { t, type Locale } from './i18n'
 
@@ -984,7 +984,7 @@ export async function runTopicAgentWithProgress(
   realEvidenceProvider?: () => Promise<EvidenceItem[]>,
   options: RunOptions = {},
 ): Promise<AgentRunResult> {
-  const useLLM = Boolean(llmConfig?.apiKey)
+  const useLLM = isLLMConfigured(llmConfig)
   const pace = options.pace !== false
   const emit = (lines: string[], stageId: string, cb: StreamCallback) => emitLines(lines, stageId, cb, '', pace)
 
