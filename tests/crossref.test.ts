@@ -11,14 +11,14 @@ afterEach(() => vi.unstubAllGlobals())
 it('maps Crossref metadata, skips empty titles, and sends repeated type filters and polite headers', async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ message: { items: [{ title: ['<i></i>'] }, item, { title: ['Other'], publisher: 'arxiv' }, { title: ['Last'] }] } }))
   const found = await searchCrossrefEvidence(input, fetcher, 4, { mailto: 'test@example.com' })
-  expect(found[0]).toEqual({ id: 'E1', title: 'Graph learning', source: 'Crossref | Journal', url: 'https://doi.org/10.1234/paper', year: 2025, tier: 'T1', claim: 'Highly-cited work from Journal (cited 20×).', relevance: 80, credibility: 88, conflictsWith: [] })
+  expect(found[0]).toEqual({ id: 'E1', title: 'Graph learning', source: 'Crossref | Journal', url: 'https://doi.org/10.1234/paper', year: 2025, tier: 'T1', claim: 'Published in Journal (2025), cited 20×.', relevance: 80, credibility: 88, conflictsWith: [] })
   expect(found[1]).toMatchObject({ id: 'E2', year: 0, tier: 'T2', source: 'Crossref | arxiv', relevance: 60, credibility: 72 })
   expect(found[2]).toMatchObject({ tier: 'T3', credibility: 55 })
   const [url, options] = fetcher.mock.calls[0]
   const params = new URL(String(url)).searchParams
   expect(params.get('filter')).toBe('type:journal-article,type:proceedings-article,type:posted-content')
   expect(params.get('mailto')).toBe('test@example.com')
-  expect(params.get('rows')).toBe('4')
+  expect(params.get('rows')).toBe('8')
   expect(params.get('query.bibliographic')).toBe('graph learning')
   expect(options?.headers).toEqual({ 'User-Agent': EVIDENCE_USER_AGENT })
   const resolverFetch = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ title: 'Graph learning' }))

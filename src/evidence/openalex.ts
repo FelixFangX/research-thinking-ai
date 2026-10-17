@@ -1,4 +1,6 @@
 import type { EvidenceItem, TopicInput } from '../types'
+import { cleanMetadata, evidenceClaim, evidenceTier, uniqueEvidence } from './shared'
+export { evidenceTier } from './shared'
 
 // Node/browser port of supabase/functions/openalex-search, with resolvable URLs
 // (the DOI when there is one, else the OpenAlex work page).
@@ -9,13 +11,7 @@ interface Work {
   title?: string | null
   publication_year?: number
   cited_by_count?: number
-  primary_location?: { source?: { display_name?: string; host_organization_name?: string } | null } | null
-}
-
-export function evidenceTier(host: string, cited: number): EvidenceItem['tier'] {
-  if (cited > 100 || /nature|science|pnas|ieee|acm|springer|elsevier|oxford|cambridge|mit press/i.test(host)) return 'T1'
-  if (/arxiv|biorxiv|medrxiv|ceur|scholarworks/i.test(host) || cited > 10) return 'T2'
-  return 'T3'
+  primary_location?: { source?: { display_name?: string; host_organization_name?: string; type?: string } | null } | null
 }
 
 export function buildQuery(input: Pick<TopicInput, 'researchInterest' | 'problemDomain' | 'seedIdea'>): string {
@@ -38,21 +34,26 @@ export async function searchOpenAlexEvidence(
   const params = new URLSearchParams()
   if (options.mailto) params.set("mailto", options.mailto)
   if (options.apiKey) params.set("api_key", options.apiKey)
-  const r = await fetchImpl(`https://api.openalex.org/works?search=${q}&per-page=${limit}&sort=relevance_score:desc&select=id,doi,title,publication_year,cited_by_count,primary_location${params.size ? `&${params}` : ""}`, options.userAgent ? { headers: { "User-Agent": options.userAgent } } : undefined)
+  const r = await fetchImpl(`https://api.openalex.org/works?search=${q}&per-page=${limit + 4}&sort=relevance_score:desc&select=id,doi,title,publication_year,cited_by_count,primary_location${params.size ? `&${params}` : ""}`, options.userAgent ? { headers: { "User-Agent": options.userAgent } } : undefined)
   if (!r.ok) throw new Error(`OpenAlex ${r.status}`)
   const works = ((await r.json()) as { results?: Work[] }).results ?? []
-  return works.slice(0, limit).map((w, i) => {
+  return uniqueEvidence(works.map(w => ({
+    work: w,
+    title: cleanMetadata(w.title ?? ''),
+    preprint: w.primary_location?.source?.type === 'repository' || /arxiv|biorxiv|medrxiv/i.test(w.primary_location?.source?.display_name ?? ''),
+    journalDoi: !!w.doi && w.primary_location?.source?.type === 'journal',
+  })), limit).map(({ work: w, title }, i) => {
     const tier = evidenceTier(w.primary_location?.source?.host_organization_name ?? '', w.cited_by_count ?? 0)
     const cited = w.cited_by_count ?? 0
-    const source = w.primary_location?.source?.display_name || 'OpenAlex'
+    const source = cleanMetadata(w.primary_location?.source?.display_name ?? '') || 'OpenAlex'
     return {
       id: `E${i + 1}`,
-      title: w.title || 'Untitled',
+      title,
       source: `OpenAlex | ${source}`,
       url: w.doi || w.id,
       year: w.publication_year ?? 0,
       tier,
-      claim: `${tier === 'T1' ? 'Highly-cited' : tier === 'T2' ? 'Recent or moderately cited' : 'Supplementary'} work from ${source} (cited ${cited}×).`,
+      claim: evidenceClaim(source, w.publication_year ?? 0, cited),
       relevance: Math.min(95, 60 + Math.min(cited, 35)),
       credibility: tier === 'T1' ? 88 : tier === 'T2' ? 72 : 55,
       conflictsWith: [],

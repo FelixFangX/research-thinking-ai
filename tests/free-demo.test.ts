@@ -23,9 +23,9 @@ describe('LLM configuration', () => {
 
 describe('free quota notices', () => {
   it('estimates complete runs from the smaller remaining allowance', () => {
-    expect(runsLeft({ globalRemaining: 3000, ipRemaining: 600 })).toBe(2)
-    expect(runsLeft({ globalRemaining: 249, ipRemaining: 600 })).toBe(0)
-    expect(runsLeft({ globalRemaining: 1000, ipRemaining: 500 })).toBe(2)
+    expect(runsLeft({ globalRemaining: 3000, ipRemaining: 600 })).toBe(4)
+    expect(runsLeft({ globalRemaining: 149, ipRemaining: 600 })).toBe(0)
+    expect(runsLeft({ globalRemaining: 1000, ipRemaining: 500 })).toBe(3)
     expect(runsLeft({ globalRemaining: -1, ipRemaining: 600 })).toBe(0)
   })
   it('maps quota exhaustion to a local reset time', () => {

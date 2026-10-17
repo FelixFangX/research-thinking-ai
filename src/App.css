@@ -48,9 +48,9 @@
 .big { font-size: 24px; font-weight: 600; }
 .evidence-cards { display: grid; }
 .evidence-card { padding: 24px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 24px; }
-.evidence-title { font-weight: 600; }
-.evidence-card-header { align-items: baseline; }
-.evidence-tier { color: var(--muted); font-size: 12px; }
+.evidence-title { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.evidence-card-header { flex-wrap: nowrap; align-items: flex-start; }
+.evidence-tier { flex: none; color: var(--muted); font-size: 12px; }
 .evidence-claim { margin-top: 8px; }
 .evidence-metrics { display: flex; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 12px; }
 .evidence-metric { display: flex; align-items: center; gap: 8px; }

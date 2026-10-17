@@ -750,9 +750,6 @@ function App() {
                     <h2>{t('r.evidence')}</h2>
                     {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p data-testid="evidence-source">{t('evidence.openalex')}</p>}
                     {result.evidence.some(item => item.source.startsWith('Crossref')) && <p data-testid="evidence-source">{t('evidence.crossref')}</p>}
-                    <p className="muted">
-                      {t('r.format')} {result.sourcePolicy.citationTemplate}
-                    </p>
                     <div data-testid="evidence-list" className="evidence-cards">
                       {result.evidence.map((item) => (
                         <article data-testid="evidence-item" id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>

@@ -1,6 +1,6 @@
 import { QuotaError } from '../llm'
 
-export const NEURONS_PER_RUN = 250
+export const NEURONS_PER_RUN = 150
 export const FREE_MODELS = [
   { id: '@cf/zai-org/glm-4.7-flash', label: 'GLM-4.7 Flash' },
   { id: '@cf/google/gemma-4-26b-a4b-it', label: 'Gemma 4 26B' },
