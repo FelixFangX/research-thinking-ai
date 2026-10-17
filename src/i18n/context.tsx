@@ -1,44 +1,33 @@
 import {
   useCallback,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from 'react'
 import { I18nContext } from './ctx'
-import { detectLocale } from './detect'
+import { resolveLocale } from './detect'
 import { t as translate, type Locale } from './translations'
 
 const LOCALE_KEY = 'copilot_locale'
 
-function loadLocale(): Locale | null {
-  try {
-    const v = localStorage.getItem(LOCALE_KEY)
-    if (v === 'zh' || v === 'en') return v
-  } catch { /* noop */ }
-  return null
-}
-
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => loadLocale() ?? 'en')
-  const ran = useRef(false)
-
-  useEffect(() => {
-    if (ran.current || loadLocale()) return
-    ran.current = true
-    detectLocale().then((l) => {
-      setLocaleState(l)
-      localStorage.setItem(LOCALE_KEY, l)
-    })
-  }, [])
+  const [locale, setLocaleState] = useState<Locale>(resolveLocale)
 
   useEffect(() => {
     document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
+    const description = translate(locale, 'app.description')
+    for (const [selector, content] of [
+      ['meta[name="description"]', description],
+      ['meta[property="og:title"]', translate(locale, 'app.title')],
+      ['meta[property="og:description"]', description],
+      ['meta[name="twitter:title"]', translate(locale, 'app.title')],
+      ['meta[name="twitter:description"]', description],
+    ]) document.querySelector(selector)?.setAttribute('content', content)
   }, [locale])
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l)
-    localStorage.setItem(LOCALE_KEY, l)
+    try { localStorage.setItem(LOCALE_KEY, l) } catch { /* Storage may be disabled. */ }
   }, [])
 
   const tFn = useCallback(

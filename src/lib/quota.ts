@@ -28,6 +28,20 @@ export function freeErrorNotice(error: unknown, now = new Date(), locale?: strin
 export function errorMessageNotice(error: unknown, now = new Date(), locale?: string): { key: string; params: Record<string, string | number> } {
   const notice = freeErrorNotice(error, now, locale)
   if (notice) return notice
-  if (error instanceof Error && /^API \d+\b/.test(error.message)) return { key: 'error.api', params: {} }
-  return error instanceof Error && error.message ? { key: 'toast.fail', params: { msg: error.message.slice(0, 120) } } : { key: 'toast.unknown', params: {} }
+  if (error instanceof Error) {
+    const code = /"error"\s*:\s*"([a-z_]+)"/.exec(error.message)?.[1] ?? error.message
+    if (code === 'quota_exhausted' || code === 'rate_limited') {
+      return freeErrorNotice(new QuotaError(code), now, locale)!
+    }
+    const keys: Record<string, string> = {
+      upstream_error: 'free.unavailable', internal_error: 'error.api',
+      evidence_unavailable: 'error.evidence', evidence_rate_limited: 'error.evidenceRate',
+      not_found: 'error.notFound', method_not_allowed: 'error.method',
+      invalid_request: 'error.input', invalid_model: 'error.input', invalid_messages: 'error.input',
+      body_too_large: 'error.size', unsupported_media_type: 'error.input',
+    }
+    if (keys[code]) return { key: keys[code], params: {} }
+    if (/^API \d+\b/.test(error.message)) return { key: 'error.api', params: {} }
+  }
+  return { key: error instanceof Error ? 'error.api' : 'toast.unknown', params: {} }
 }

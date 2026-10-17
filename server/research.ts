@@ -1,3 +1,4 @@
+import { outputLanguage } from '../src/i18n/outputLanguage'
 import { createDefaultInput } from '../src/engine'
 import { runResearch } from '../src/headless'
 import { searchOpenAlexEvidence } from '../src/evidence/openalex'
@@ -43,7 +44,7 @@ export async function propose(args: ProposeArgs, deps: Deps = {}) {
         }
       : undefined
   const llm = deps.llm === undefined ? llmFromEnv() : deps.llm
-  const r = await runResearch(input, { llm, evidence: evidenceProvider })
+  const r = await runResearch(input, { llm, evidence: evidenceProvider, locale: outputLanguage(args.interest, 'en') })
   const citations = await checkCitations(r.evidence, openAlexResolver(f))
   const status = new Map(citations.items.map((i) => [i.id, i.status]))
   return {

@@ -1,3 +1,4 @@
+import { outputLanguage, outputLanguageInstruction } from './i18n/outputLanguage'
 import type {
   AgentRunResult,
   ArchitectureDecision,
@@ -143,11 +144,11 @@ function deriveLevel(score: number): ComplexityLevel {
 function formatArchitectureLabel(mode: ArchitectureMode, locale: Locale = 'zh'): string {
   const z = locale === 'zh'
   const mapping: Record<ArchitectureMode, string> = {
-    single_agent: z ? '单 Agent' : 'Single Agent',
-    workflow_orchestrator: z ? '工作流编排 Agent' : 'Workflow Orchestrator Agent',
-    multi_agent: z ? '多 Agent 协作' : 'Multi-Agent Collaboration',
+    single_agent: z ? '单助手' : 'Single Agent',
+    workflow_orchestrator: z ? '工作流编排助手' : 'Workflow Orchestrator Agent',
+    multi_agent: z ? '多助手协作' : 'Multi-Agent Collaboration',
     rag_workflow: z ? 'RAG + 工作流编排' : 'RAG + Workflow Orchestration',
-    kg_orchestrated: z ? '知识图谱 + 编排 Agent' : 'Knowledge Graph + Orchestrator Agent',
+    kg_orchestrated: z ? '知识图谱与编排助手' : 'Knowledge Graph + Orchestrator Agent',
   }
   return mapping[mode]
 }
@@ -268,34 +269,34 @@ export function decideArchitecture(
   }
 
   const moduleMap: Record<ArchitectureMode, string[]> = {
-    single_agent: ['Query Planner', 'Literature Synthesizer', 'Ranking'],
+    single_agent: [(z ? '检索规划' : 'Query Planner'), (z ? '文献综合' : 'Literature Synthesizer'), (z ? '排序' : 'Ranking')],
     workflow_orchestrator: [
-      'Query Planner',
-      'Retriever',
-      'Evidence Mapper',
-      'Path Comparator',
-      'Convergence Judge',
+      (z ? '检索规划' : 'Query Planner'),
+      (z ? '文献检索' : 'Retriever'),
+      (z ? '证据梳理' : 'Evidence Mapper'),
+      (z ? '路径比较' : 'Path Comparator'),
+      (z ? '收敛判断' : 'Convergence Judge'),
     ],
     multi_agent: [
-      'Retriever Agent',
-      'Panorama Agent',
-      z ? 'Devil Agent(反证)' : 'Devil Agent (Counter-evidence)',
-      'Decision Agent',
-      'Supervisor',
+      (z ? '检索助手' : 'Retriever Agent'),
+      (z ? '全景梳理助手' : 'Panorama Agent'),
+      z ? '反证助手' : 'Devil Agent (Counter-evidence)',
+      (z ? '决策助手' : 'Decision Agent'),
+      (z ? '监督助手' : 'Supervisor'),
     ],
     rag_workflow: [
-      'Retriever + Vector Index',
-      'Citation Guard',
-      'Conflict Resolver',
-      'Scoring Agent',
-      'Judge Agent',
+      (z ? '检索与向量索引' : 'Retriever + Vector Index'),
+      (z ? '引用核验' : 'Citation Guard'),
+      (z ? '冲突处理' : 'Conflict Resolver'),
+      (z ? '评分助手' : 'Scoring Agent'),
+      (z ? '评审助手' : 'Judge Agent'),
     ],
     kg_orchestrated: [
-      'Entity Extractor',
-      'Citation Graph Builder',
-      'Graph Retriever',
-      'Path Comparator',
-      'Judge Agent',
+      (z ? '实体提取' : 'Entity Extractor'),
+      (z ? '引用图谱构建' : 'Citation Graph Builder'),
+      (z ? '图谱检索' : 'Graph Retriever'),
+      (z ? '路径比较' : 'Path Comparator'),
+      (z ? '评审助手' : 'Judge Agent'),
     ],
   }
 
@@ -720,12 +721,12 @@ function buildEvaluationPlan(locale: Locale = 'zh'): EvaluationMetric[] {
 }
 
 
-function retrieveMessages(input: TopicInput, locale: Locale) {
+export function retrieveMessages(input: TopicInput, locale: Locale) {
   const z = locale === 'zh'
   return [
     {
       role: 'system' as const,
-      content: t(locale, 'llm.retrieve.sys'),
+      content: t(outputLanguage(input.researchInterest, locale), 'llm.retrieve.sys') + '\n' + outputLanguageInstruction(input.researchInterest, locale),
     },
     {
       role: 'user' as const,
@@ -788,12 +789,12 @@ Include 1-2 conflictsWith pairs. IDs from E1 to E6.`,
   ]
 }
 
-function mapMessages(input: TopicInput, evidence: EvidenceItem[], locale: Locale) {
+export function mapMessages(input: TopicInput, evidence: EvidenceItem[], locale: Locale) {
   const z = locale === 'zh'
   return [
     {
       role: 'system' as const,
-      content: t(locale, 'llm.map.sys'),
+      content: t(outputLanguage(input.researchInterest, locale), 'llm.map.sys') + '\n' + outputLanguageInstruction(input.researchInterest, locale),
     },
     {
       role: 'user' as const,
@@ -842,7 +843,7 @@ Return JSON:
   ]
 }
 
-function compareMessages(
+export function compareMessages(
   input: TopicInput,
   evidence: EvidenceItem[],
   architecture: ArchitectureDecision,
@@ -852,7 +853,7 @@ function compareMessages(
   return [
     {
       role: 'system' as const,
-      content: t(locale, 'llm.compare.sys'),
+      content: t(outputLanguage(input.researchInterest, locale), 'llm.compare.sys') + '\n' + outputLanguageInstruction(input.researchInterest, locale),
     },
     {
       role: 'user' as const,
@@ -919,7 +920,7 @@ Requirements: 3 paths (P1/P2/P3), clearly differentiated (conservative/balanced/
   ]
 }
 
-function convergeMessages(input: TopicInput, candidates: CandidatePath[], locale: Locale) {
+export function convergeMessages(input: TopicInput, candidates: CandidatePath[], locale: Locale) {
   const z = locale === 'zh'
   const confirmations = z
     ? (input.participationMode === 'high'
@@ -932,7 +933,7 @@ function convergeMessages(input: TopicInput, candidates: CandidatePath[], locale
   return [
     {
       role: 'system' as const,
-      content: t(locale, 'llm.converge.sys'),
+      content: t(outputLanguage(input.researchInterest, locale), 'llm.converge.sys') + '\n' + outputLanguageInstruction(input.researchInterest, locale),
     },
     {
       role: 'user' as const,
@@ -1113,7 +1114,7 @@ export async function runTopicAgentWithProgress(
         t(locale, 'mock.map.4'),
         '',
         t(locale, 'mock.map.5'),
-        t(locale, 'mock.map.6', { score: complexity.score, level: complexity.level }),
+        t(locale, 'mock.map.6', { score: complexity.score, level: locale === 'zh' ? ({ low: '低', medium: '中', high: '高', frontier: '前沿' }[complexity.level]) : complexity.level }),
         t(locale, 'mock.map.7', { arch: formatArchitectureLabel(architecture.mode, locale) }),
         t(locale, 'mock.map.8', { modules: architecture.modules.join(' → ') }),
       ],
@@ -1126,7 +1127,7 @@ export async function runTopicAgentWithProgress(
     id: 'map',
     name: t(locale, 'stg.map'),
     status: 'done',
-    detail: t(locale, 'stg.map.done', { score: complexity.score, mode: architecture.mode }),
+    detail: t(locale, 'stg.map.done', { score: complexity.score, mode: formatArchitectureLabel(architecture.mode, locale) }),
     progress: 50,
   })
 

@@ -1,3 +1,4 @@
+import { formatArchitecture } from '../engine'
 import { useCallback, useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 import type { AgentRunResult, TopicInput } from '../types'
@@ -12,7 +13,7 @@ function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string
   const isZh = locale === 'zh'
   const top = result.candidates[0]
   const lines: string[] = [
-    `# Research Topic Agent - ${isZh ? '选题报告' : 'Research Report'}`,
+    `# ${isZh ? '研究思路 — 选题报告' : 'Research Thinking - Research Report'}`,
     '',
     `> ${isZh ? '生成时间' : 'Generated'}: ${new Date().toLocaleString(isZh ? 'zh-CN' : 'en-US')}`,
     '',
@@ -26,8 +27,8 @@ function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string
     '',
     `## ${isZh ? '复杂度与架构' : 'Complexity & Architecture'}`,
     '',
-    `- **${isZh ? '复杂度' : 'Complexity'}**: ${result.complexity.score}/100 (${result.complexity.level})`,
-    `- **${isZh ? '架构模式' : 'Architecture'}**: ${result.architecture.mode}`,
+    `- **${isZh ? '复杂度' : 'Complexity'}**: ${result.complexity.score}/100 (${isZh ? ({ low: '低', medium: '中', high: '高', frontier: '前沿' }[result.complexity.level]) : result.complexity.level})`,
+    `- **${isZh ? '架构模式' : 'Architecture'}**: ${formatArchitecture(result.architecture.mode, isZh ? 'zh' : 'en')}`,
     `- **${isZh ? '原因' : 'Reason'}**: ${result.architecture.reason}`,
     '',
     `## ${isZh ? '候选路径' : 'Candidate Paths'}`,

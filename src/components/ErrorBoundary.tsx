@@ -1,3 +1,4 @@
+import { resolveLocale } from '../i18n/detect'
 import { t } from '../i18n/translations'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
@@ -33,20 +34,20 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-boundary-fallback" role="alert">
           <div className="error-boundary-icon" aria-hidden="true">!</div>
-          <h2>{t('en', 'error.title')}</h2>
+          <h2>{t(resolveLocale(), 'error.title')}</h2>
           <p className="muted">
-            {this.state.error?.message || t('en', 'error.unknown')}
+            {t(resolveLocale(), 'error.unknown')}
           </p>
           <div className="error-boundary-actions">
             <button className="btn btn-secondary" onClick={this.handleRetry} type="button">
-              {t('en', 'error.retry')}
+              {t(resolveLocale(), 'error.retry')}
             </button>
             <button
               className="btn btn-ghost"
               onClick={() => window.location.reload()}
               type="button"
             >
-              {t('en', 'error.reload')}
+              {t(resolveLocale(), 'error.reload')}
             </button>
           </div>
         </div>
