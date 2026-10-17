@@ -43,6 +43,8 @@ import { isLLMConfigured, QuotaError } from './llm'
 import { fetchEvidence } from './evidence/client'
 import { freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
 import { evidenceSourceKey, type EvidenceOrigin } from './lib/evidenceSource'
+import { Ring, PipelineRing } from './components/Ring'
+import { updateTabLed, type InstrumentState } from './lib/tabLed'
 import './App.css'
 
 type WeightKey = keyof DecisionWeights
@@ -68,6 +70,11 @@ function App() {
   const { settings, updateSettings, resetSettings } = useSettings()
   const { toasts, toast, dismiss: dismissToast } = useToast()
 
+  const formRef = useRef<HTMLFormElement>(null)
+  const [stageTimes, setStageTimes] = useState<Record<string, { start: number; end?: number }>>({})
+  const [events, setEvents] = useState<string[]>([])
+  const [clock, setClock] = useState(0)
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'auto')
   const [view, setView] = useState<DashboardView>('workspace')
   const [showSettings, setShowSettings] = useState(false)
   const settingsRef = useRef(settings)
@@ -115,6 +122,7 @@ function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
+        if (e.key === 'Enter') { e.preventDefault(); formRef.current?.requestSubmit() }
         if (e.key === '1') { e.preventDefault(); setView('workspace') }
         if (e.key === '2') { e.preventDefault(); setView('product') }
         if (e.key === '3') { e.preventDefault(); setView('ops') }
@@ -168,6 +176,8 @@ function App() {
     retry: false,
     onSettled: refreshStatus,
     mutationFn: async (payload: TopicInput) => {
+      setStageTimes({})
+      setEvents([])
       setFreeError(null)
       setEvidenceOrigin(null)
       setResult(null)
@@ -184,6 +194,15 @@ function App() {
       const agentResult = await runTopicAgentWithProgress(
         payload,
         (update) => {
+          const now = Date.now()
+          setClock(now)
+          setStageTimes(previous => {
+            const timing = previous[update.id]
+            if (update.status === 'running' && !timing) return { ...previous, [update.id]: { start: now } }
+            if ((update.status === 'done' || update.status === 'error') && timing) return { ...previous, [update.id]: { ...timing, end: now } }
+            return previous
+          })
+          setEvents(prev => [`${new Date().toLocaleTimeString()} · ${update.name} · ${update.detail}`, ...prev].slice(0, 8))
           setPipeline((prev) => mergeStage(prev, update))
         },
         onStream,
@@ -252,6 +271,9 @@ function App() {
       })
     },
     onError: (err) => {
+      const now = Date.now()
+      setClock(now)
+      setStageTimes(previous => Object.fromEntries(Object.entries(previous).map(([id, timing]) => [id, { ...timing, end: timing.end ?? now }])))
       if (settingsRef.current.apiProvider === 'free') setFreeError(err)
       mockRef.current = false
       setPipeline((prev) =>
@@ -281,11 +303,6 @@ function App() {
     () => result?.evidence.filter((item) => item.conflictsWith.length > 0) ?? [],
     [result],
   )
-
-  const pipelineProgress = useMemo(() => {
-    if (pipeline.length === 0) return 0
-    return Math.round(Math.max(...pipeline.map((item) => item.progress)))
-  }, [pipeline])
 
   const manualReady = useMemo(() => {
     if (input.participationMode === 'low') return true
@@ -332,6 +349,7 @@ function App() {
 
   const handleRun = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
+    if (runMutation.isPending) return
     const s = settingsRef.current
     if (!isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })) {
       setShowNoLLM(true)
@@ -413,12 +431,38 @@ function App() {
     [toast],
   )
 
+  const instrumentState: InstrumentState = runMutation.isPending ? 'processing' : notice || runMutation.isError ? 'error' : result ? 'done' : 'idle'
+  const activeIndex = Math.max(0, pipeline.findIndex(stage => stage.status === 'running'))
+  const stateText = instrumentState === 'processing' ? t('inst.processing', { stage: pipeline[activeIndex].name, n: activeIndex + 1 })
+    : instrumentState === 'done' ? t('inst.done', { n: result?.candidates.length ?? 0, c: result?.evidence.length ?? 0 })
+    : instrumentState === 'error' ? t('inst.error', { msg: notice ? t(notice.key, notice.params) : runMutation.error?.message ?? t('toast.unknown') }) : t('inst.idle')
+  useEffect(() => {
+    document.documentElement.dataset.state = instrumentState
+    const refresh = () => updateTabLed(instrumentState, t('app.title'), t(`inst.tab.${instrumentState}`))
+    refresh()
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    media.addEventListener('change', refresh)
+    return () => media.removeEventListener('change', refresh)
+  }, [instrumentState, theme, t])
+  useEffect(() => {
+    if (!runMutation.isPending) return
+    const timer = window.setInterval(() => setClock(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [runMutation.isPending])
+  const cycleTheme = () => {
+    const next = theme === 'auto' ? 'light' : theme === 'light' ? 'dark' : 'auto'
+    if (next === 'auto') document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.dataset.theme = next
+    try { localStorage.setItem('theme', next) } catch { /* Storage can be unavailable. */ }
+    setTheme(next)
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar panel">
         <div className="topbar-left">
-          <span className="brand-mark" aria-hidden="true">◇</span>
-          <h1>{t('app.title')}</h1>
+          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label">{t('inst.brand')}</span></a>
+          <span className="tool-name">{t('app.title')}</span>
         </div>
         <div className="topbar-right">
           <button
@@ -430,6 +474,8 @@ function App() {
           >
             {locale === 'zh' ? t('language.en') : t('language.zh')}
           </button>
+          <button className="theme-pill" type="button" onClick={cycleTheme}>{theme === 'auto' ? t('inst.auto') : t(`cfg.theme.${theme}`)}</button>
+          <a className="github-link" href="https://github.com/FelixFangX/research-thinking-ai" aria-label={t('inst.github')}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03a9.6 9.6 0 0 1 5 0c1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg></a>
           <button
             id="btn-cfg"
             data-testid="settings-button"
@@ -472,9 +518,10 @@ function App() {
         </button>
       </nav>
 
+      {runMutation.isPending && <div className="mobile-progress" data-testid="mobile-progress" aria-hidden="true"><PipelineRing stages={pipeline} /><span>{pipeline[activeIndex].name} · {activeIndex + 1}/4</span></div>}
       <section className="layout">
         <aside className="panel sidebar" aria-label={t('aria.sidebar')}>
-          <h2>{t('sidebar.log')}</h2>
+          <details className="session-log"><summary>{t('sidebar.log')}</summary>
           <p className="muted">{t('sidebar.logDesc')}</p>
           {history.length === 0 ? (
             <EmptyState
@@ -533,31 +580,25 @@ function App() {
             </button>
           )}
 
-          <h3>{t('sidebar.pipeline')}</h3>
-          <div className="progress-bar" role="progressbar" aria-valuenow={pipelineProgress} aria-valuemin={0} aria-valuemax={100}>
-            <div style={{ width: `${pipelineProgress}%` }} />
-          </div>
-          <div className="small-hint">{pipelineProgress}%</div>
+          </details>
+          <h2 className="label">{t('sidebar.pipeline')}</h2>
+          <PipelineRing stages={pipeline} />
+          <p className="state-line label" data-testid="state-line" role="status" aria-live="polite">{stateText}</p>
           <div className="pipeline-list">
             {pipeline.map((item) => (
               <div key={item.id} data-testid={`stage-${item.id}`} className={`pipeline-item status-${item.status}`}>
                 <div className="pipeline-title">
                   <span>{item.name}</span>
-                  <span>{item.status === 'running' ? `${item.progress}%` : t(`ui.${item.status === 'idle' ? 'pending' : item.status}`)}</span>
+                  <span>{t(`inst.${item.status === 'idle' ? 'pending' : item.status === 'done' ? 'complete' : item.status === 'error' ? 'failed' : 'running'}`)} · {stageTimes[item.id] ? `${Math.max(0, ((stageTimes[item.id].end ?? clock) - stageTimes[item.id].start) / 1000).toFixed(0)}s` : '—'}</span>
                 </div>
                 <p>{item.detail}</p>
               </div>
             ))}
           </div>
 
-          <h3>{t('sidebar.events')}</h3>
-          <ul className="analytics-list">
-            <li>run_started</li>
-            <li>shortlist_generated</li>
-            <li>overridden</li>
-            <li>accepted</li>
-            <li>flow_completed</li>
-          </ul>
+          <details className="events-log" open={window.matchMedia('(min-width: 900px)').matches || undefined}><summary><span className="desktop-events">{t('sidebar.events')}</span><span className="mobile-events">{t('inst.log')}</span></summary>
+            <ul className="analytics-list">{events.map((event, index) => <li key={index}>{event}</li>)}</ul>
+          </details>
         </aside>
 
         <section className="content" role="tabpanel">
@@ -578,10 +619,19 @@ function App() {
           {view === 'workspace' && !iterView && (
             <>
               <section className="panel animate-in" id="sec-input">
-                <h2>{t('ws.title')}</h2>
-                <p className="intro">{t('ws.desc')}</p>
-                <p className="muted privacy-line">{t('ws.privacy')}</p>
-                <form className="input-form" onSubmit={handleRun}>
+                <p className="label">{t('inst.brief')}</p>
+                <h1 className="brief-title">{t('inst.title')}</h1>
+                <p className="label brief-subline">{t('inst.sub')}</p>
+                <form ref={formRef} className="input-form" onSubmit={handleRun}>
+                  <label>
+                    {t('ws.interest')}
+                    <textarea
+                      value={input.researchInterest}
+                      onChange={(e) => updateField('researchInterest', e.target.value)}
+                      rows={3}
+                      placeholder={t('ws.interest.ph')}
+                    />
+                  </label>
                   <div className="mode-switch">
                     <button
                       type="button"
@@ -601,15 +651,23 @@ function App() {
                     </button>
                   </div>
 
-                  <label>
-                    {t('ws.interest')}
-                    <textarea
-                      value={input.researchInterest}
-                      onChange={(e) => updateField('researchInterest', e.target.value)}
-                      rows={2}
-                      placeholder={t('ws.interest.ph')}
-                    />
-                  </label>
+                  <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
+                    <Ring />{runMutation.isPending ? t('ws.running') : t('ws.run')}
+                    <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘↵' : 'Ctrl+↵'}</kbd>
+                  </button>
+                  {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className={`quota-notice ${notice.key === 'free.unavailable' ? 'error-callout' : ''}`}>
+                    <p>{t(notice.key, notice.params)}</p>
+                    <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                    <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
+                  </div>}
+                  {runMutation.isError && !notice && <div data-testid="quota-notice" role="alert" className="run-error"><p>{t('toast.fail', { msg: runMutation.error.message })}</p><button type="button" onClick={() => doRun()}>{t('error.retry')}</button><button type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button></div>}
+                  <p data-testid="engine-line" className="muted">{settings.apiProvider === 'free'
+                    ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
+                    : settings.apiModel}
+                  {settings.apiProvider === 'free' && status && <> · {t('free.runs', { n: runsLeft(status.quota) })}</>}
+                  </p>
+                    <button data-testid="demo-button" className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                  <details className="more-context"><summary>{t('inst.context')}</summary><div className="context-fields">
                   <label>
                     {t('ws.domain')}
                     <input
@@ -653,14 +711,9 @@ function App() {
                     </label>
                     <label>
                       {t('ws.complexity')}
-                      <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        value={input.complexityHint}
-                        onChange={(e) => updateField('complexityHint', Number(e.target.value))}
-                      />
-                      <div className="small-hint">{t('ws.level', { n: input.complexityHint })}</div>
+                      <span className="complexity-ticks" role="group" aria-label={t('ws.complexity')}>
+                        {[1, 2, 3, 4, 5].map(n => <button type="button" key={n} aria-pressed={input.complexityHint === n} onClick={() => updateField('complexityHint', n)}>{n}</button>)}
+                      </span>
                     </label>
                   </div>
 
@@ -689,21 +742,7 @@ function App() {
                     ))}
                   </div>
 
-                  <p data-testid="engine-line" className="muted">{settings.apiProvider === 'free'
-                    ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
-                    : settings.apiModel}
-                    {settings.apiProvider === 'free' && status && <> · {t('free.runs', { n: runsLeft(status.quota) })}</>}
-                  </p>
-                  {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className="quota-notice">
-                    <p>{t(notice.key, notice.params)}</p>
-                    <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
-                    <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
-                  </div>}
-                  {runMutation.isError && !notice && <p role="alert" className="run-error">{t('toast.fail', { msg: runMutation.error.message })}</p>}
-                  <button data-testid="demo-button" className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
-                  <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
-                    {runMutation.isPending ? t('ws.running') : t('ws.run')}
-                  </button>
+                  </div></details>
                 </form>
               </section>
 
@@ -1071,6 +1110,7 @@ function App() {
         />
       )}
 
+      <footer className="wall-strip label">{t('inst.footer')}</footer>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {view === 'workspace' && !iterView && result && (

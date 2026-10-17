@@ -1,0 +1,1 @@
+try{var theme=localStorage.getItem('theme');if(theme==='light'||theme==='dark')document.documentElement.dataset.theme=theme;if(!sessionStorage.getItem('instrument-seen')){document.documentElement.dataset.intro='true';sessionStorage.setItem('instrument-seen','1')}}catch{}
