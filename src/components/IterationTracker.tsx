@@ -138,7 +138,7 @@ export function IterationTracker({
                 />
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                   onClick={handleAddJournal}
                   disabled={!journalDraft.trim()}
                 >
@@ -165,7 +165,7 @@ export function IterationTracker({
             <div className="iter-action-card">
               <h4>{t('iter.rerun')}</h4>
               <p className="muted">{t('iter.rerunDesc')}</p>
-              <button type="button" className="btn btn-primary" onClick={onRerun}>
+              <button type="button" className="btn btn-secondary" onClick={onRerun}>
                 {t('iter.rerun')}
               </button>
             </div>
@@ -187,7 +187,7 @@ export function IterationTracker({
               <div className="iter-action-row">
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                   onClick={() => onComplete(plan.id)}
                 >
                   {t('iter.complete')}

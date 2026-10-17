@@ -15,7 +15,6 @@ import {
 import { EmptyState } from './components/EmptyState'
 import { NoLLMDialog } from './components/NoLLMDialog'
 import { IterationTracker } from './components/IterationTracker'
-import { OnboardingBanner } from './components/OnboardingBanner'
 import { SettingsPanel } from './components/SettingsPanel'
 import { StreamPanel } from './components/StreamPanel'
 import { ShareExport } from './components/ShareExport'
@@ -96,20 +95,9 @@ function App() {
   const [previousResult, setPreviousResult] = useState<AgentRunResult | null>(null)
   const iteration = useIteration('anonymous')
   const [showNoLLM, setShowNoLLM] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const change = () => setTheme(media.matches ? 'dark' : 'light')
-    media.addEventListener('change', change)
-    return () => media.removeEventListener('change', change)
-  }, [])
   const hasTrackedView = useRef(false)
   const autoScrollRef = useRef(false)
   const lastScrollY = useRef(0)
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
 
   useEffect(() => {
     if (hasTrackedView.current) return
@@ -152,7 +140,7 @@ function App() {
     const y = document.documentElement.scrollHeight
     if (y !== lastScrollY.current) {
       lastScrollY.current = y
-      window.scrollTo({ top: y, behavior: 'smooth' })
+      window.scrollTo({ top: y, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
     }
   }, [pipeline, streamTexts, thinkingTexts])
 
@@ -278,7 +266,7 @@ function App() {
 
   const citationText = (value: string) => value.split(/(\bE\d+\b)/g).map((part, index) =>
     result?.evidence.some(e => e.id === part)
-      ? <a className="citation-chip" key={index} href={`#evidence-${part}`}>{part}</a> : part)
+      ? <a data-testid="citation" className="citation-chip" key={index} href={`#evidence-${part}`}>{part}</a> : part)
 
   const selectedPath = useMemo(() => {
     if (!result) return null
@@ -426,66 +414,60 @@ function App() {
     <main className="app-shell">
       <header className="topbar panel">
         <div className="topbar-left">
-          <span className="badge">
-            <span className="badge-dot" aria-hidden="true" />
-            {t('app.badge')}
-          </span>
+          <span className="brand-mark" aria-hidden="true">◇</span>
           <h1>{t('app.title')}</h1>
-          <p className="muted">
-            {t('app.subtitle')}
-          </p>
         </div>
         <div className="topbar-right">
-          <nav className="tabs" role="tablist" aria-label={t('aria.nav')}>
-            <button
-              type="button"
-              role="tab"
-              className={view === 'workspace' ? 'tab active' : 'tab'}
-              aria-selected={view === 'workspace'}
-              onClick={() => { setView('workspace'); track('dashboard_view_changed', { view: 'workspace' }) }}
-            >
-              WORKSPACE
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className={view === 'product' ? 'tab active' : 'tab'}
-              aria-selected={view === 'product'}
-              onClick={() => { setView('product'); track('dashboard_view_changed', { view: 'product' }) }}
-            >
-              PRODUCT
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className={view === 'ops' ? 'tab active' : 'tab'}
-              aria-selected={view === 'ops'}
-              onClick={() => { setView('ops'); track('dashboard_view_changed', { view: 'ops' }) }}
-            >
-              OPS
-            </button>
-          </nav>
           <button
             id="btn-lang"
             className="settings-btn"
             onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
             type="button"
-            aria-label="Switch language"
+            aria-label={t('aria.language')}
           >
-            {locale === 'zh' ? '[EN]' : '[中]'}
+            {locale === 'zh' ? t('language.en') : t('language.zh')}
           </button>
           <button
             id="btn-cfg"
+            data-testid="settings-button"
             className="settings-btn"
             onClick={() => setShowSettings(true)}
             type="button"
             aria-label={t('aria.settings')}
           >
-            [CFG]
+            <span aria-hidden="true">⚙</span>
           </button>
-
         </div>
       </header>
+      <nav className="tabs" role="tablist" aria-label={t('aria.nav')}>
+        <button
+          type="button"
+          role="tab"
+          className={view === 'workspace' ? 'tab active' : 'tab'}
+          aria-selected={view === 'workspace'}
+          onClick={() => { setView('workspace'); track('dashboard_view_changed', { view: 'workspace' }) }}
+        >
+          {t('nav.workspace')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={view === 'product' ? 'tab active' : 'tab'}
+          aria-selected={view === 'product'}
+          onClick={() => { setView('product'); track('dashboard_view_changed', { view: 'product' }) }}
+        >
+          {t('nav.product')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={view === 'ops' ? 'tab active' : 'tab'}
+          aria-selected={view === 'ops'}
+          onClick={() => { setView('ops'); track('dashboard_view_changed', { view: 'ops' }) }}
+        >
+          {t('nav.ops')}
+        </button>
+      </nav>
 
       <section className="layout">
         <aside className="panel sidebar" aria-label={t('aria.sidebar')}>
@@ -493,17 +475,17 @@ function App() {
           <p className="muted">{t('sidebar.logDesc')}</p>
           {history.length === 0 ? (
             <EmptyState
-              icon=">"
+              icon="◇"
               title={t('sidebar.empty.title')}
               description={t('sidebar.empty.desc')}
             />
           ) : (
             <ul className="history-list">
               {history.map((item) => (
-                <li
-                  key={item.id}
-                  role="button"
-                  tabIndex={0}
+                <li key={item.id}>
+                <button
+                  type="button"
+                  className="history-button"
                   title={t('sidebar.viewDetail')}
                   onClick={() => {
                     if (item.fullResult) {
@@ -517,26 +499,21 @@ function App() {
                       setManualChecks(checks)
                       setIterView(false)
                       setView('workspace')
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      ;(e.target as HTMLElement).click()
+                      window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
                     }
                   }}
                 >
                   <strong>{item.interest.slice(0, 20)}</strong>
                   <div className="muted">
-                    {formatMode(item.mode, locale).slice(0, 4)} // {item.complexityScore} // {formatArchitecture(item.architecture, locale)}
+                    {formatMode(item.mode, locale).slice(0, 4)} · {item.complexityScore} · {formatArchitecture(item.architecture, locale)}
                   </div>
                   <div className="muted">
-                    PATH {item.selectedPathId} // CONF {item.confidence}%
+                    {item.selectedPathId} · {t('ui.confidence')} {item.confidence}%
                   </div>
                   <div className="muted" style={{ fontSize: 'var(--font-xs)' }}>
                     {new Date(item.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </div>
+                </button>
                 </li>
               ))}
             </ul>
@@ -545,7 +522,7 @@ function App() {
           {iteration.activePlan && (
             <button
               type="button"
-              className="btn btn-primary sidebar-iter-btn"
+              className="btn btn-secondary sidebar-iter-btn"
               onClick={() => { setView('workspace'); setIterView(true) }}
             >
               {t('iter.status.active')}: {iteration.activePlan.pathName.slice(0, 16)}
@@ -559,7 +536,7 @@ function App() {
           <div className="small-hint">{pipelineProgress}%</div>
           <div className="pipeline-list">
             {pipeline.map((item) => (
-              <div key={item.id} className={`pipeline-item status-${item.status}`}>
+              <div key={item.id} data-testid={`stage-${item.id}`} className={`pipeline-item status-${item.status}`}>
                 <div className="pipeline-title">
                   <span>{item.name}</span>
                   <span>{item.progress}%</span>
@@ -596,11 +573,10 @@ function App() {
 
           {view === 'workspace' && !iterView && (
             <>
-              <OnboardingBanner />
-
               <section className="panel animate-in" id="sec-input">
                 <h2>{t('ws.title')}</h2>
-                <p className="muted">{t('ws.desc')}</p>
+                <p className="intro">{t('ws.desc')}</p>
+                <p className="muted privacy-line">{t('ws.privacy')}</p>
                 <form className="input-form" onSubmit={handleRun}>
                   <div className="mode-switch">
                     <button
@@ -709,19 +685,20 @@ function App() {
                     ))}
                   </div>
 
-                  <p className="muted">{settings.apiProvider === 'free'
+                  <p data-testid="engine-line" className="muted">{settings.apiProvider === 'free'
                     ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
                     : settings.apiModel}
                     {settings.apiProvider === 'free' && status && <> · {t('free.runs', { n: runsLeft(status.quota) })}</>}
                   </p>
-                  {settings.apiProvider === 'free' && notice && <div role="status" className="quota-notice">
+                  {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className="quota-notice">
                     <p>{t(notice.key, notice.params)}</p>
                     <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
                     <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
                   </div>}
+                  {runMutation.isError && !notice && <p role="alert" className="run-error">{t('toast.fail', { msg: runMutation.error.message })}</p>}
                   {evidenceOrigin === 'fallback' && <p role="status" className="muted">{t('evidence.fallback')}</p>}
-                  <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
-                  <button className="btn btn-primary" type="submit"  disabled={runMutation.isPending}>
+                  <button data-testid="demo-button" className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                  <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
                     {runMutation.isPending ? t('ws.running') : t('ws.run')}
                   </button>
                 </form>
@@ -740,7 +717,7 @@ function App() {
                       <article>
                         <h3>{t('r.complexity')}</h3>
                         <p className="big">{result.complexity.score}</p>
-                        <p className="muted">{result.complexity.level.toUpperCase()}</p>
+                        <p className="muted">{result.complexity.level}</p>
                         <ul>
                           {result.complexity.rationale.map((item) => (
                             <li key={item}>{citationText(item)}</li>
@@ -771,14 +748,14 @@ function App() {
 
                   <section className="panel" id="sec-evidence">
                     <h2>{t('r.evidence')}</h2>
-                    {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p>{t('evidence.openalex')}</p>}
-                    {result.evidence.some(item => item.source.startsWith('Crossref')) && <p>{t('evidence.crossref')}</p>}
+                    {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p data-testid="evidence-source">{t('evidence.openalex')}</p>}
+                    {result.evidence.some(item => item.source.startsWith('Crossref')) && <p data-testid="evidence-source">{t('evidence.crossref')}</p>}
                     <p className="muted">
-                      FORMAT: {result.sourcePolicy.citationTemplate}
+                      {t('r.format')} {result.sourcePolicy.citationTemplate}
                     </p>
-                    <div className="evidence-cards">
+                    <div data-testid="evidence-list" className="evidence-cards">
                       {result.evidence.map((item) => (
-                        <article id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
+                        <article data-testid="evidence-item" id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
                           <div className="evidence-card-header">
                             <a
                               href={item.url}
@@ -792,7 +769,7 @@ function App() {
                                 })
                               }
                             >
-                              [{item.id}] {item.title}
+                              {item.id} · {item.title}
                             </a>
                             <span className={`evidence-tier tier-${item.tier}`}>{item.tier}</span>
                           </div>
@@ -800,14 +777,14 @@ function App() {
                           <p className="evidence-claim">{item.claim}</p>
                           <div className="evidence-metrics">
                             <span className="evidence-metric">
-                              <span className="evidence-metric-label">REL</span>
+                              <span className="evidence-metric-label">{t('ui.relevance')}</span>
                               <span className="evidence-metric-bar">
                                 <span style={{ width: `${item.relevance}%` }} />
                               </span>
                               <span>{item.relevance}</span>
                             </span>
                             <span className="evidence-metric">
-                              <span className="evidence-metric-label">CRED</span>
+                              <span className="evidence-metric-label">{t('ui.credibility')}</span>
                               <span className="evidence-metric-bar">
                                 <span style={{ width: `${item.credibility}%` }} />
                               </span>
@@ -815,7 +792,7 @@ function App() {
                             </span>
                           </div>
                           {item.conflictsWith.length > 0 && (
-                            <div className="warn evidence-conflict-note">CONFLICT: {item.conflictsWith.join(', ')}</div>
+                            <div className="warn evidence-conflict-note">{t('r.conflict')} {item.conflictsWith.join(', ')}</div>
                           )}
                         </article>
                       ))}
@@ -838,16 +815,16 @@ function App() {
                             <div className="path-card-header">
                               <span className="path-card-id">{item.id}</span>
                               <span className="path-card-name">{item.name}</span>
-                              {item.evidenceIds.filter(id => result.evidence.some(e => e.id === id)).map(id => <a className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}
+                              {item.evidenceIds.filter(id => result.evidence.some(e => e.id === id)).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}
                               <span className="path-card-score">{item.score}<span className="muted">/100</span></span>
                             </div>
                             <div className="path-card-bars">
                               {([
-                                ['NOV', item.novelty],
-                                ['FEAS', item.feasibility],
-                                ['IMP', item.impact],
-                                ['RISK', item.risk],
-                                ['EVID', item.evidenceCoverage],
+                                [t('w.novelty'), item.novelty],
+                                [t('w.feasibility'), item.feasibility],
+                                [t('w.impact'), item.impact],
+                                [t('w.risk'), item.risk],
+                                [t('w.evidence'), item.evidenceCoverage],
                               ] as [string, number][]).map(([label, val]) => (
                                 <div key={label} className="path-bar-row">
                                   <span className="path-bar-label">{label}</span>
@@ -856,13 +833,13 @@ function App() {
                                 </div>
                               ))}
                             </div>
-                            <div className="path-card-conf">CONF {item.confidence}%</div>
+                            <div className="path-card-conf">{t('ui.confidence')} {item.confidence}%</div>
                             {isSel && (
                               <div className="path-card-detail">
-                                <p><strong>HYPOTHESIS:</strong> {citationText(item.hypothesis)}</p>
-                                <p><strong>METHOD:</strong> {citationText(item.method)}</p>
-                                <p><strong>EXPERIMENT:</strong> {item.firstExperiment}</p>
-                                <p><strong>STOP_COND:</strong> {item.stopCondition}</p>
+                                <p><strong>{t('ui.hypothesis')}</strong> {citationText(item.hypothesis)}</p>
+                                <p><strong>{t('ui.method')}</strong> {citationText(item.method)}</p>
+                                <p><strong>{t('ui.experiment')}</strong> {item.firstExperiment}</p>
+                                <p><strong>{t('ui.stop')}</strong> {item.stopCondition}</p>
                               </div>
                             )}
                           </article>
@@ -882,7 +859,7 @@ function App() {
                             <option value="">{t('r.override.keep')}</option>
                             {result.candidates.map((item) => (
                               <option key={item.id} value={item.id}>
-                                {item.id} // {item.name}
+                                {item.id} · {item.name}
                               </option>
                             ))}
                           </select>
@@ -919,7 +896,7 @@ function App() {
                       </div>
                     )}
 
-                    <button className="btn btn-primary" type="button" onClick={handleAccept}>
+                    <button className="btn btn-secondary" type="button" onClick={handleAccept}>
                       {t('r.accept')}
                     </button>
                     {isAccepted && <p className="ok">{t('r.accepted')}</p>}
@@ -937,8 +914,8 @@ function App() {
                   {getPersonas(locale).map((item) => (
                     <article key={item.name}>
                       <h3>{item.name}</h3>
-                      <p><strong>PAIN:</strong> {item.pain}</p>
-                      <p><strong>SUCCESS:</strong> {item.success}</p>
+                      <p><strong>{t('ui.pain')}</strong> {item.pain}</p>
+                      <p><strong>{t('ui.success')}</strong> {item.success}</p>
                     </article>
                   ))}
                 </div>
@@ -974,7 +951,7 @@ function App() {
                     <div className="table-wrap">
                       <table>
                         <thead>
-                          <tr><th>METRIC</th><th>DEF</th><th>TARGET</th><th>OWNER</th></tr>
+                          <tr><th>{t('ui.metric')}</th><th>{t('ui.definition')}</th><th>{t('ui.target')}</th><th>{t('ui.owner')}</th></tr>
                         </thead>
                         <tbody>
                           {getProductKpis(locale).map((item) => (
@@ -994,7 +971,7 @@ function App() {
                     <div className="table-wrap">
                       <table>
                         <thead>
-                          <tr><th>METRIC</th><th>DEF</th><th>TARGET</th><th>OWNER</th></tr>
+                          <tr><th>{t('ui.metric')}</th><th>{t('ui.definition')}</th><th>{t('ui.target')}</th><th>{t('ui.owner')}</th></tr>
                         </thead>
                         <tbody>
                           {getAiKpis(locale).map((item) => (
@@ -1021,7 +998,7 @@ function App() {
                 <div className="table-wrap">
                   <table>
                     <thead>
-                      <tr><th>SERVICE</th><th>ROLE</th><th>STACK</th><th>SLO</th></tr>
+                      <tr><th>{t('ui.service')}</th><th>{t('ui.role')}</th><th>{t('ui.stack')}</th><th>{t('ui.slo')}</th></tr>
                     </thead>
                     <tbody>
                       {getServiceBlueprint(locale).map((service) => (
@@ -1042,9 +1019,9 @@ function App() {
                 <div className="user-grid">
                   {getSecurityControls(locale).map((item) => (
                     <article key={item.id}>
-                      <h3>{item.id} // RULE</h3>
+                      <h3>{item.id} · {t('ui.rule')}</h3>
                       <p>{item.rule}</p>
-                      <p className="muted">CTRL: {item.control}</p>
+                      <p className="muted">{t('ui.control')} {item.control}</p>
                     </article>
                   ))}
                 </div>
@@ -1098,13 +1075,13 @@ function App() {
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {view === 'workspace' && !iterView && result && (
-        <nav className="quick-nav" aria-label="Quick navigation">
-          <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="quick-nav-btn">{t('nav.top')}</button>
-          <button type="button" onClick={() => document.getElementById('sec-input')?.scrollIntoView({ behavior: 'smooth' })} className="quick-nav-btn">{t('nav.input')}</button>
-          <button type="button" onClick={() => document.getElementById('sec-thinking')?.scrollIntoView({ behavior: 'smooth' })} className="quick-nav-btn">{t('nav.thinking')}</button>
-          <button type="button" onClick={() => document.getElementById('sec-arch')?.scrollIntoView({ behavior: 'smooth' })} className="quick-nav-btn">{t('nav.arch')}</button>
-          <button type="button" onClick={() => document.getElementById('sec-evidence')?.scrollIntoView({ behavior: 'smooth' })} className="quick-nav-btn">{t('nav.evidence')}</button>
-          <button type="button" onClick={() => document.getElementById('sec-paths')?.scrollIntoView({ behavior: 'smooth' })} className="quick-nav-btn">{t('nav.paths')}</button>
+        <nav className="quick-nav" aria-label={t('aria.quickNav')}>
+          <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.top')}</button>
+          <button type="button" onClick={() => document.getElementById('sec-input')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.input')}</button>
+          <button type="button" onClick={() => document.getElementById('sec-thinking')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.thinking')}</button>
+          <button type="button" onClick={() => document.getElementById('sec-arch')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.arch')}</button>
+          <button type="button" onClick={() => document.getElementById('sec-evidence')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.evidence')}</button>
+          <button type="button" onClick={() => document.getElementById('sec-paths')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })} className="quick-nav-btn">{t('nav.paths')}</button>
         </nav>
       )}
     </main>

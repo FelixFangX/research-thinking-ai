@@ -15,7 +15,7 @@ export function EmptyState({ icon = '🔬', title, description, action }: Props)
       <h3 className="empty-state-title">{title}</h3>
       <p className="empty-state-desc">{description}</p>
       {action ? (
-        <button className="btn btn-primary" onClick={action.onClick} type="button">
+        <button className="btn btn-secondary" onClick={action.onClick} type="button">
           {action.label}
         </button>
       ) : null}

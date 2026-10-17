@@ -42,11 +42,11 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
 
   return (
     <div className="settings-overlay" onClick={onClose} role="dialog" aria-label={t('cfg.aria')}>
-      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+      <div data-testid="settings-panel" className="settings-modal" onClick={(e) => e.stopPropagation()}>
         <div className="settings-chrome">
           <span className="settings-title">{t('cfg.title')}</span>
           <button className="settings-close" onClick={onClose} type="button" aria-label={t('cfg.close')}>
-            [X]
+            ×
           </button>
         </div>
         <div className="settings-body">
@@ -77,21 +77,21 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                       className={`scheme-btn ${settings.apiProvider === 'openai' ? 'active' : ''}`}
                       onClick={() => handleProviderChange('openai')}
                     >
-                      OPENAI
+                      OpenAI
                     </button>
                     <button
                       type="button"
                       className={`scheme-btn ${settings.apiProvider === 'anthropic' ? 'active' : ''}`}
                       onClick={() => handleProviderChange('anthropic')}
                     >
-                      ANTHROPIC
+                      Anthropic
                     </button>
                     <button
                       type="button"
                       className={`scheme-btn ${settings.apiProvider === 'minimax' ? 'active' : ''}`}
                       onClick={() => handleProviderChange('minimax')}
                     >
-                      MINIMAX
+                      MiniMax
                     </button>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                       className="pixel-toggle"
                       onClick={() => setShowKey((v) => !v)}
                     >
-                      {showKey ? '[HIDE]' : '[SHOW]'}
+                      {showKey ? t('ui.hide') : t('ui.show')}
                     </button>
                   </div>
                   {settings.apiKey ? (
@@ -179,7 +179,7 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                     }}
                     aria-pressed={persist}
                   >
-                    {persist ? '[ON ]' : '[OFF]'}
+                    {persist ? t('ui.on') : t('ui.off')}
                   </button>
                 </label>
                 <span className="muted">{t('cfg.rememberKey.desc')}</span>
@@ -199,7 +199,7 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                     className={`scheme-btn ${settings.defaultMode === m ? 'active' : ''}`}
                     onClick={() => onUpdate({ defaultMode: m })}
                   >
-                    {m === 'high' ? 'HIGH' : 'LOW'}
+                    {m === 'high' ? t('ws.mode.high') : t('ws.mode.low')}
                   </button>
                 ))}
               </div>
@@ -230,7 +230,7 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
           <section className="settings-section">
             <h3>{t('cfg.language')}</h3>
             <div className="settings-row">
-              <span className="settings-label">Language</span>
+              <span className="settings-label">{t('cfg.language')}</span>
               <div className="scheme-grid">
                 <button
                   type="button"
@@ -252,7 +252,7 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
         </div>
         <div className="settings-footer">
           <button className="btn btn-ghost" type="button" onClick={onReset}>{t('cfg.reset')}</button>
-          <button className="btn btn-primary" type="button" onClick={onClose}>{t('cfg.done')}</button>
+          <button className="btn btn-secondary" type="button" onClick={onClose}>{t('cfg.done')}</button>
         </div>
       </div>
     </div>

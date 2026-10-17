@@ -1,3 +1,4 @@
+import { t } from '../i18n/translations'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 interface Props {
@@ -32,20 +33,20 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-boundary-fallback" role="alert">
           <div className="error-boundary-icon" aria-hidden="true">!</div>
-          <h2>&gt; SYSTEM ERROR</h2>
+          <h2>{t('en', 'error.title')}</h2>
           <p className="muted">
-            {this.state.error?.message || 'Unknown error // Please refresh and retry'}
+            {this.state.error?.message || t('en', 'error.unknown')}
           </p>
           <div className="error-boundary-actions">
-            <button className="btn btn-primary" onClick={this.handleRetry} type="button">
-              [ RETRY ]
+            <button className="btn btn-secondary" onClick={this.handleRetry} type="button">
+              {t('en', 'error.retry')}
             </button>
             <button
               className="btn btn-ghost"
               onClick={() => window.location.reload()}
               type="button"
             >
-              [ RELOAD ]
+              {t('en', 'error.reload')}
             </button>
           </div>
         </div>
