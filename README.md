@@ -22,7 +22,7 @@ The legacy `supabase/` folder is no longer used by the web app; it is kept for r
 
 ## Cloudflare demo (preview)
 
-Try https://research-thinking.ledring.workers.dev — no sign-up required. The custom domain is not attached yet. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching works on `*.workers.dev` and custom domains; the Workers Cache API is per-datacenter and best-effort.
+Try https://research.ledring.dev — no sign-up required. The same Worker is also reachable at https://research-thinking.ledring.workers.dev. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching works on `*.workers.dev` and custom domains; the Workers Cache API is per-datacenter and best-effort.
 
 Shared daily caps reset at midnight UTC: **3,000 neurons/day globally** and **600/day per IP**, with **12 LLM requests/minute per IP**. A full run measured about **115 neurons**; usage varies by input and output (see the eval below).
 

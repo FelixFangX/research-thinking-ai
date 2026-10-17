@@ -1,6 +1,6 @@
 # Cloudflare public demo
 
-The login-free preview is at https://research-thinking.ledring.workers.dev. It runs on Workers Static Assets, Workers AI and D1. No routes or custom domains are configured in `wrangler.jsonc`; the custom domain is not attached yet. The web app no longer uses the legacy `supabase/` folder, which remains for reference until retirement.
+The login-free preview is at https://research.ledring.dev (Worker custom domain, set in `wrangler.jsonc` `routes`), and still at https://research-thinking.ledring.workers.dev. It runs on Workers Static Assets, Workers AI and D1. The web app no longer uses the legacy `supabase/` folder, which remains for reference until retirement.
 
 ## Endpoints
 

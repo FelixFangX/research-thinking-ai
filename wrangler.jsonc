@@ -3,6 +3,7 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
+  "routes": [{ "pattern": "research.ledring.dev", "custom_domain": true }],
   "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "single-page-application" },
   "ai": { "binding": "AI" },
   "d1_databases": [{ "binding": "DB", "database_name": "research-thinking", "database_id": "a71904ae-a2e3-43ac-aa63-6f30fc2877f1", "migrations_dir": "worker/migrations" }],
