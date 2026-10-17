@@ -52,11 +52,10 @@ function validateSettings(raw: Record<string, unknown>): AppSettings {
   })
 }
 
-function applyToDocument(s: AppSettings) {
-  const el = document.documentElement
-  el.setAttribute('data-scheme', s.colorScheme)
-  el.setAttribute('data-scanlines', String(s.scanlines))
-  el.setAttribute('data-crt-glow', String(s.crtGlow))
+function applyToDocument() {
+  document.documentElement.removeAttribute('data-scheme')
+  document.documentElement.removeAttribute('data-scanlines')
+  document.documentElement.removeAttribute('data-crt-glow')
 }
 
 function loadSettings(): AppSettings {
@@ -70,18 +69,18 @@ function loadSettings(): AppSettings {
 }
 
 export function initSettings() {
-  applyToDocument(loadSettings())
+  applyToDocument()
 }
 
 export function useSettings() {
   const [settings, setState] = useState<AppSettings>(() => {
     const s = loadSettings()
-    applyToDocument(s)
+    applyToDocument()
     return s
   })
 
   useEffect(() => {
-    applyToDocument(settings)
+    applyToDocument()
     const { apiKey: _k, ...rest } = settings
     void _k
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(rest))

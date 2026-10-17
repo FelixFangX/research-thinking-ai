@@ -401,7 +401,7 @@ function buildEvidence(input: TopicInput, locale: Locale = 'zh'): EvidenceItem[]
         ? '产业白皮书：低延迟优先比可解释模块更关键'
         : 'Industry whitepaper: Low latency is more critical than interpretability modules',
       source: 'Industry Whitepaper',
-      url: 'https://www.posthog.com/',
+      url: `https://scholar.google.com/scholar?q=${encoded}`,
       year: 2024,
       tier: 'T3',
       claim: z
@@ -996,9 +996,13 @@ export async function runTopicAgentWithProgress(
     progress: 0,
   })
 
-  let evidence: EvidenceItem[]
+  let liveEvidence: EvidenceItem[] | undefined
   if (realEvidenceProvider) {
-    // Real OpenAlex API via Supabase Edge Function
+    try { liveEvidence = await realEvidenceProvider() } catch { /* Continue with model or demo evidence. */ }
+  }
+  let evidence: EvidenceItem[]
+  if (liveEvidence) {
+    // Live evidence is included in all subsequent stage prompts.
     onProgress({
       id: 'retrieve',
       name: t(locale, 'stg.retrieve'),
@@ -1006,7 +1010,7 @@ export async function runTopicAgentWithProgress(
       detail: t(locale, 'stg.retrieve.start'),
       progress: 0,
     })
-    evidence = await realEvidenceProvider()
+    evidence = liveEvidence
     await emit(
       [
         t(locale, 'mock.ret.1'),

@@ -54,7 +54,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
                 {String(e.tier ?? 'T2')}
               </span>
             </div>
-            <h4 className="sp-card-title">{String(e.title ?? '')}</h4>
+            <h4 className="sp-card-title"><a href={String(e.url ?? '')} target="_blank" rel="noopener noreferrer">{String(e.title ?? '')}</a></h4>
             <p className="sp-card-claim">{String(e.claim ?? '')}</p>
             <div className="sp-card-meta">
               <span>{String(e.source ?? '')}</span>
@@ -155,7 +155,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
             <div className="sp-card-meta">
               <span>CONF {String(c.confidence ?? '—')}%</span>
               {Array.isArray(c.evidenceIds) && (
-                <span>REFS {(c.evidenceIds as string[]).join(', ')}</span>
+                <span>{(c.evidenceIds as string[]).map(id => <a className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}</span>
               )}
             </div>
           </div>

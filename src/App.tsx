@@ -12,16 +12,12 @@ import {
   getServiceBlueprint,
   getUxDeliverables,
 } from './blueprint'
-import { AuthGate } from './components/AuthGate'
-import { BootScreen } from './components/BootScreen'
 import { EmptyState } from './components/EmptyState'
 import { NoLLMDialog } from './components/NoLLMDialog'
 import { IterationTracker } from './components/IterationTracker'
 import { OnboardingBanner } from './components/OnboardingBanner'
-import { Paywall, type PlanTier } from './components/Paywall'
 import { SettingsPanel } from './components/SettingsPanel'
 import { StreamPanel } from './components/StreamPanel'
-import { Tour, type TourStep } from './components/Tour'
 import { ShareExport } from './components/ShareExport'
 import { ToastContainer } from './components/ToastContainer'
 import {
@@ -31,9 +27,8 @@ import {
   getDefaultWeights,
   runTopicAgentWithProgress,
 } from './engine'
-import { clearApiKey, loadApiKey } from './lib/keyVault'
+import { loadApiKey } from './lib/keyVault'
 import { useI18n } from './i18n'
-import { useAuth } from './hooks/useAuth'
 import { useHistory } from './hooks/useHistory'
 import { useIteration } from './hooks/useIteration'
 import { useSettings } from './hooks/useSettings'
@@ -45,6 +40,9 @@ import type {
   PipelineStageProgress,
   TopicInput,
 } from './types'
+import { isLLMConfigured, QuotaError } from './llm'
+import { fetchEvidence } from './evidence/client'
+import { freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
 import './App.css'
 
 type WeightKey = keyof DecisionWeights
@@ -60,16 +58,6 @@ function mergeStage(
 function App() {
   const { locale, setLocale, t } = useI18n()
 
-  const TOUR_STEPS: TourStep[] = useMemo(() => [
-    { target: '.topbar', title: t('tour.1.t'), content: t('tour.1.c'), placement: 'bottom' as const },
-    { target: '#btn-lang', title: t('tour.2.t'), content: t('tour.2.c'), placement: 'bottom' as const },
-    { target: '#btn-theme', title: t('tour.3.t'), content: t('tour.3.c'), placement: 'bottom' as const },
-    { target: '#btn-cfg', title: t('tour.4.t'), content: t('tour.4.c'), placement: 'bottom' as const },
-    { target: '.mode-switch', title: t('tour.5.t'), content: t('tour.5.c'), placement: 'bottom' as const },
-    { target: '.input-form', title: t('tour.6.t'), content: t('tour.6.c') },
-    { target: '.input-form .btn-primary', title: t('tour.7.t'), content: t('tour.7.c'), placement: 'top' as const },
-  ], [t])
-
   const STAGE_TEMPLATE: PipelineStageProgress[] = useMemo(() => [
     { id: 'retrieve' as const, name: t('stg.retrieve'), status: 'idle' as const, detail: t('stg.idle'), progress: 0 },
     { id: 'map' as const, name: t('stg.map'), status: 'idle' as const, detail: t('stg.idle'), progress: 0 },
@@ -77,15 +65,11 @@ function App() {
     { id: 'converge' as const, name: t('stg.converge'), status: 'idle' as const, detail: t('stg.idle'), progress: 0 },
   ], [t])
 
-  const { user, isAuthenticated, login, register, logout } = useAuth()
   const { settings, updateSettings, resetSettings } = useSettings()
   const { toasts, toast, dismiss: dismissToast } = useToast()
 
   const [view, setView] = useState<DashboardView>('workspace')
   const [showSettings, setShowSettings] = useState(false)
-  const tourKey = user ? `copilot_guide_completed_${user.id}` : null
-  const [tourDismissed, setTourDismissed] = useState(false)
-  const showTour = !tourDismissed && !!tourKey && (typeof window === 'undefined' || localStorage.getItem(tourKey) !== '1')
   const settingsRef = useRef(settings)
   useEffect(() => { settingsRef.current = settings }, [settings])
   const mockRef = useRef(false)
@@ -103,36 +87,28 @@ function App() {
   const [pipeline, setPipeline] = useState<PipelineStageProgress[]>(STAGE_TEMPLATE)
   const [streamTexts, setStreamTexts] = useState<Record<string, string>>({})
   const [thinkingTexts, setThinkingTexts] = useState<Record<string, string>>({})
-  const { records: history, addRecord: addHistory } = useHistory(user?.id ?? '')
+  const { records: history, addRecord: addHistory } = useHistory('anonymous')
   const [overridePathId, setOverridePathId] = useState('')
   const [overrideNote, setOverrideNote] = useState('')
   const [manualChecks, setManualChecks] = useState<Record<string, boolean>>({})
   const [isAccepted, setIsAccepted] = useState(false)
   const [iterView, setIterView] = useState(false)
   const [previousResult, setPreviousResult] = useState<AgentRunResult | null>(null)
-  const iteration = useIteration(user?.id ?? '')
-  const [booted, setBooted] = useState(() => sessionStorage.getItem('rta_booted') === '1')
-  const handleBootComplete = useCallback(() => {
-    sessionStorage.setItem('rta_booted', '1')
-    setBooted(true)
-  }, [])
+  const iteration = useIteration('anonymous')
   const [showNoLLM, setShowNoLLM] = useState(false)
-  const [plan, setPlan] = useState<PlanTier>(() => {
-    if (typeof window === 'undefined') return 'free'
-    return (localStorage.getItem('copilot_plan') as PlanTier) ?? 'free'
-  })
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light'
-    return (localStorage.getItem('copilot_theme') as 'light' | 'dark') ?? 'light'
-  })
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const change = () => setTheme(media.matches ? 'dark' : 'light')
+    media.addEventListener('change', change)
+    return () => media.removeEventListener('change', change)
+  }, [])
   const hasTrackedView = useRef(false)
-  const autoScrollRef = useRef(true)
+  const autoScrollRef = useRef(false)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('copilot_theme', theme)
   }, [theme])
 
   useEffect(() => {
@@ -142,11 +118,10 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!user) return
-    loadApiKey(user.id).then((key) => {
+    loadApiKey('anonymous').then((key) => {
       if (key) updateSettings({ apiKey: key })
     })
-  }, [user, updateSettings])
+  }, [updateSettings])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -181,11 +156,6 @@ function App() {
     }
   }, [pipeline, streamTexts, thinkingTexts])
 
-  const handleTourComplete = useCallback(() => {
-    if (tourKey) localStorage.setItem(tourKey, '1')
-    setTourDismissed(true)
-  }, [tourKey])
-
   const onStream = useCallback((stageId: string, text: string) => {
     setStreamTexts((prev) => ({ ...prev, [stageId]: text }))
   }, [])
@@ -194,15 +164,29 @@ function App() {
     setThinkingTexts((prev) => ({ ...prev, [stageId]: text }))
   }, [])
 
+  const [status, setStatus] = useState<FreeStatus | null>(null)
+  const [freeError, setFreeError] = useState<unknown>(null)
+  const [evidenceOrigin, setEvidenceOrigin] = useState<'fallback' | null>(null)
+  const refreshStatus = useCallback(() => {
+    void fetch('/api/status').then(async (res) => {
+      if (res.ok) setStatus(await res.json())
+    }).catch(() => {})
+  }, [])
+  useEffect(refreshStatus, [refreshStatus])
+  const notice = freeErrorNotice(freeError ?? (status?.quota.exhausted ? new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }) : null))
   const runMutation = useMutation({
+    retry: false,
+    onSettled: refreshStatus,
     mutationFn: async (payload: TopicInput) => {
+      setFreeError(null)
+      setEvidenceOrigin(null)
       setPipeline(STAGE_TEMPLATE)
       setStreamTexts({})
       setThinkingTexts({})
       const s = settingsRef.current
       const llmCfg = mockRef.current
         ? null
-        : s.apiKey
+        : isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })
           ? { provider: s.apiProvider, baseUrl: s.apiBaseUrl, apiKey: s.apiKey, model: s.apiModel }
           : null
       return runTopicAgentWithProgress(
@@ -214,6 +198,15 @@ function App() {
         locale,
         llmCfg,
         onThinking,
+        mockRef.current ? undefined : async () => {
+          try {
+            const evidence = await fetchEvidence(payload)
+            return evidence
+          } catch (error) {
+            setEvidenceOrigin('fallback')
+            throw error
+          }
+        },
       )
     },
     onMutate: (payload) => {
@@ -242,7 +235,7 @@ function App() {
       if (topPath) {
         void addHistory({
           id: crypto.randomUUID(),
-          userId: user?.id ?? '',
+          userId: 'anonymous',
           createdAt: new Date().toISOString(),
           interest: payload.researchInterest,
           mode: payload.participationMode,
@@ -268,12 +261,13 @@ function App() {
       })
     },
     onError: (err) => {
+      if (settingsRef.current.apiProvider === 'free') setFreeError(err)
       mockRef.current = false
       setPipeline((prev) =>
         prev.map((item) => ({
           ...item,
-          status: item.status === 'done' ? 'done' : 'error',
-          detail: item.status === 'done' ? item.detail : t('toast.stageFail'),
+          status: item.status === 'running' ? 'error' : item.status,
+          detail: item.status === 'running' ? t('toast.stageFail') : item.detail,
         })),
       )
       const msg = err instanceof Error ? err.message : t('toast.unknown')
@@ -281,6 +275,10 @@ function App() {
       track('topic_agent_run_failed')
     },
   })
+
+  const citationText = (value: string) => value.split(/(\bE\d+\b)/g).map((part, index) =>
+    result?.evidence.some(e => e.id === part)
+      ? <a className="citation-chip" key={index} href={`#evidence-${part}`}>{part}</a> : part)
 
   const selectedPath = useMemo(() => {
     if (!result) return null
@@ -334,7 +332,7 @@ function App() {
     setOverrideNote('')
     setIsAccepted(false)
     setManualChecks({})
-    autoScrollRef.current = true
+    autoScrollRef.current = false
     if (useMock) {
       mockRef.current = true
     }
@@ -344,8 +342,12 @@ function App() {
   const handleRun = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     const s = settingsRef.current
-    if (!s.apiKey) {
+    if (!isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })) {
       setShowNoLLM(true)
+      return
+    }
+    if (s.apiProvider === 'free' && status?.quota.exhausted) {
+      setFreeError(new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }))
       return
     }
     doRun()
@@ -420,38 +422,6 @@ function App() {
     [toast],
   )
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        {!booted && <BootScreen onComplete={handleBootComplete} />}
-        {booted && (
-          <>
-            <div className="auth-toolbar">
-              <button
-                className="settings-btn"
-                onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
-                type="button"
-                aria-label="Switch language"
-              >
-                {locale === 'zh' ? '[EN]' : '[中]'}
-              </button>
-              <button
-                className="settings-btn"
-                onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
-                type="button"
-                aria-label={theme === 'light' ? t('cfg.theme.dark') : t('cfg.theme.light')}
-              >
-                {theme === 'light' ? '[◐]' : '[◑]'}
-              </button>
-            </div>
-            <AuthGate onLogin={login} onRegister={register} />
-          </>
-        )}
-        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      </>
-    )
-  }
-
   return (
     <main className="app-shell">
       <header className="topbar panel">
@@ -495,9 +465,6 @@ function App() {
               OPS
             </button>
           </nav>
-          <div className="user-info">
-            <span className="user-info-name">{user?.displayName}</span>
-          </div>
           <button
             id="btn-lang"
             className="settings-btn"
@@ -508,15 +475,6 @@ function App() {
             {locale === 'zh' ? '[EN]' : '[中]'}
           </button>
           <button
-            id="btn-theme"
-            className="settings-btn"
-            onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
-            type="button"
-            aria-label={theme === 'light' ? t('cfg.theme.dark') : t('cfg.theme.light')}
-          >
-            {theme === 'light' ? '[◐]' : '[◑]'}
-          </button>
-          <button
             id="btn-cfg"
             className="settings-btn"
             onClick={() => setShowSettings(true)}
@@ -525,9 +483,7 @@ function App() {
           >
             [CFG]
           </button>
-          <button className="logout-btn" onClick={() => { clearApiKey(); logout() }} type="button" aria-label={t('aria.logout')}>
-            [EXIT]
-          </button>
+
         </div>
       </header>
 
@@ -753,7 +709,19 @@ function App() {
                     ))}
                   </div>
 
-                  <button className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
+                  <p className="muted">{settings.apiProvider === 'free'
+                    ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
+                    : settings.apiModel}
+                    {settings.apiProvider === 'free' && status && <> · {t('free.runs', { n: runsLeft(status.quota) })}</>}
+                  </p>
+                  {settings.apiProvider === 'free' && notice && <div role="status" className="quota-notice">
+                    <p>{t(notice.key, notice.params)}</p>
+                    <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                    <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
+                  </div>}
+                  {evidenceOrigin === 'fallback' && <p role="status" className="muted">{t('evidence.fallback')}</p>}
+                  <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                  <button className="btn btn-primary" type="submit"  disabled={runMutation.isPending}>
                     {runMutation.isPending ? t('ws.running') : t('ws.run')}
                   </button>
                 </form>
@@ -766,7 +734,7 @@ function App() {
                   <section className="panel" id="sec-arch">
                     <div className="section-header">
                       <h2>{t('r.arch')}</h2>
-                      <ShareExport input={input} result={result} onToast={handleToast} plan={plan} onPaywall={() => setShowPaywall(true)} />
+                      <ShareExport input={input} result={result} onToast={handleToast} />
                     </div>
                     <div className="result-grid">
                       <article>
@@ -775,7 +743,7 @@ function App() {
                         <p className="muted">{result.complexity.level.toUpperCase()}</p>
                         <ul>
                           {result.complexity.rationale.map((item) => (
-                            <li key={item}>{item}</li>
+                            <li key={item}>{citationText(item)}</li>
                           ))}
                         </ul>
                       </article>
@@ -803,17 +771,18 @@ function App() {
 
                   <section className="panel" id="sec-evidence">
                     <h2>{t('r.evidence')}</h2>
+                    {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p>{t('evidence.openalex')}</p>}
                     <p className="muted">
                       FORMAT: {result.sourcePolicy.citationTemplate}
                     </p>
                     <div className="evidence-cards">
                       {result.evidence.map((item) => (
-                        <article key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
+                        <article id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
                           <div className="evidence-card-header">
                             <a
                               href={item.url}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               className="evidence-title"
                               onClick={() =>
                                 track('evidence_opened', {
@@ -826,6 +795,7 @@ function App() {
                             </a>
                             <span className={`evidence-tier tier-${item.tier}`}>{item.tier}</span>
                           </div>
+                          <p className="muted">{item.source} · {item.year}</p>
                           <p className="evidence-claim">{item.claim}</p>
                           <div className="evidence-metrics">
                             <span className="evidence-metric">
@@ -858,6 +828,7 @@ function App() {
 
                   <section className="panel" id="sec-paths">
                     <h2>{t('r.paths')}</h2>
+                    <ul>{result.recommendation.why.map((reason, index) => <li key={index}>{citationText(reason)}</li>)}</ul>
                     <div className="path-cards">
                       {result.candidates.map((item) => {
                         const isSel = selectedPath?.id === item.id
@@ -866,6 +837,7 @@ function App() {
                             <div className="path-card-header">
                               <span className="path-card-id">{item.id}</span>
                               <span className="path-card-name">{item.name}</span>
+                              {item.evidenceIds.filter(id => result.evidence.some(e => e.id === id)).map(id => <a className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}
                               <span className="path-card-score">{item.score}<span className="muted">/100</span></span>
                             </div>
                             <div className="path-card-bars">
@@ -886,8 +858,8 @@ function App() {
                             <div className="path-card-conf">CONF {item.confidence}%</div>
                             {isSel && (
                               <div className="path-card-detail">
-                                <p><strong>HYPOTHESIS:</strong> {item.hypothesis}</p>
-                                <p><strong>METHOD:</strong> {item.method}</p>
+                                <p><strong>HYPOTHESIS:</strong> {citationText(item.hypothesis)}</p>
+                                <p><strong>METHOD:</strong> {citationText(item.method)}</p>
                                 <p><strong>EXPERIMENT:</strong> {item.firstExperiment}</p>
                                 <p><strong>STOP_COND:</strong> {item.stopCondition}</p>
                               </div>
@@ -978,7 +950,7 @@ function App() {
                     <h3>{t('pv.journey')}</h3>
                     <ol>
                       {getJourney(locale).map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{citationText(item)}</li>
                       ))}
                     </ol>
                   </article>
@@ -986,7 +958,7 @@ function App() {
                     <h3>{t('pv.deliverables')}</h3>
                     <ul>
                       {getUxDeliverables(locale).map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{citationText(item)}</li>
                       ))}
                     </ul>
                   </article>
@@ -1084,7 +1056,7 @@ function App() {
                     <h3>{t('ops.releasePlan')}</h3>
                     <ul>
                       {getReleasePlan(locale).map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{citationText(item)}</li>
                       ))}
                     </ul>
                   </article>
@@ -1105,8 +1077,9 @@ function App() {
 
       {showSettings && (
         <SettingsPanel
+          models={status?.models}
           settings={settings}
-          userId={user?.id ?? ''}
+          userId={'anonymous'}
           onUpdate={updateSettings}
           onReset={resetSettings}
           onClose={() => setShowSettings(false)}
@@ -1121,20 +1094,6 @@ function App() {
         />
       )}
 
-      {showPaywall && (
-        <Paywall
-          currentPlan={plan}
-          onUpgrade={() => {
-            setPlan('pro')
-            localStorage.setItem('copilot_plan', 'pro')
-            setShowPaywall(false)
-            toast('success', t('pay.toast.upgrade'))
-          }}
-          onClose={() => setShowPaywall(false)}
-        />
-      )}
-
-      {showTour && <Tour steps={TOUR_STEPS} onComplete={handleTourComplete} />}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {view === 'workspace' && !iterView && result && (

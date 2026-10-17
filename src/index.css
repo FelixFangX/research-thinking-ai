@@ -28,8 +28,8 @@
   --pixel-shadow: 3px 3px 0 var(--border);
   --pixel-shadow-accent: 3px 3px 0 var(--accent-dim);
 
-  --font-pixel: 'Press Start 2P', monospace;
-  --font-terminal: 'VT323', 'Fira Code', 'Courier New', monospace;
+  --font-pixel: system-ui, sans-serif;
+  --font-terminal: system-ui, sans-serif;
   --font-code: 'Fira Code', 'Courier New', monospace;
 
   --font-xs: 0.7rem;

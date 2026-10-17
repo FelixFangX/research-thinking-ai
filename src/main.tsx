@@ -5,6 +5,8 @@ import { initAnalytics } from './analytics'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { I18nProvider } from './i18n'
 import { initSettings } from './hooks/useSettings'
+import '@fontsource/fira-code/latin-400.css'
+import '@fontsource/fira-code/latin-500.css'
 import './index.css'
 import App from './App.tsx'
 

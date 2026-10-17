@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import type { PlanTier } from './Paywall'
 import { useI18n } from '../i18n'
 import type { AgentRunResult, TopicInput } from '../types'
 
@@ -7,8 +6,6 @@ interface Props {
   input: TopicInput
   result: AgentRunResult
   onToast?: (type: 'success' | 'info' | 'error', message: string) => void
-  plan?: PlanTier
-  onPaywall?: () => void
 }
 
 function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string): string {
@@ -72,19 +69,9 @@ function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string
   return lines.join('\n')
 }
 
-export function ShareExport({ input, result, onToast, plan = 'free', onPaywall }: Props) {
+export function ShareExport({ input, result, onToast }: Props) {
   const { t, locale } = useI18n()
   const [isExporting, setIsExporting] = useState(false)
-  const isPro = plan === 'pro'
-
-  const guardExport = useCallback((action: () => void) => {
-    if (!isPro) {
-      onPaywall?.()
-      return
-    }
-    action()
-  }, [isPro, onPaywall])
-
   const handleCopy = useCallback(async () => {
     const md = buildMarkdown(input, result, locale)
     try {
@@ -114,8 +101,8 @@ export function ShareExport({ input, result, onToast, plan = 'free', onPaywall }
   return (
     <div className="share-export">
       <button
-        className={`btn btn-ghost ${!isPro ? 'export-locked-btn' : ''}`}
-        onClick={() => guardExport(() => void handleCopy())}
+        className="btn btn-ghost"
+        onClick={() => void handleCopy()}
         type="button"
         aria-label={t('export.copy')}
       >
@@ -124,11 +111,10 @@ export function ShareExport({ input, result, onToast, plan = 'free', onPaywall }
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
         </svg>
         {t('export.copy')}
-        {!isPro && <span className="export-lock-icon">[PRO]</span>}
       </button>
       <button
-        className={`btn btn-ghost ${!isPro ? 'export-locked-btn' : ''}`}
-        onClick={() => guardExport(handleDownload)}
+        className="btn btn-ghost"
+        onClick={handleDownload}
         type="button"
         disabled={isExporting}
         aria-label={t('export.download')}
@@ -139,7 +125,6 @@ export function ShareExport({ input, result, onToast, plan = 'free', onPaywall }
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
         {t('export.download')}
-        {!isPro && <span className="export-lock-icon">[PRO]</span>}
       </button>
     </div>
   )

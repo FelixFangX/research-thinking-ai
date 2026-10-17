@@ -3,6 +3,20 @@ export type Locale = 'zh' | 'en'
 type Dict = Record<string, string>
 
 const zh: Dict = {
+  "cfg.engine": "AI 引擎",
+  "cfg.free": "免费（Workers AI）",
+  "cfg.advanced": "自备 API 密钥（高级）",
+  "cfg.freeNote": "使用 Cloudflare Workers AI 免费额度。每日额度共享，无需密钥。",
+  "cfg.keyPrivacy": "密钥仅保存在此浏览器中，直接发送给服务商，不经过我们的服务器。",
+  "free.engine": "免费模型 · {model}",
+  "free.runs": "今日约剩 {n} 次运行",
+  "free.exhausted": "今日免费 AI 额度已用完，将于本地时间 {time}（UTC 00:00）重置。您仍可运行离线演示，或在设置 → 高级中使用自己的 API 密钥。",
+  "free.rateLimited": "请求过于频繁，请在 {n} 秒后重试。",
+  "free.unavailable": "免费模型暂时不可用。请稍后重试，或使用演示。",
+  "free.demo": "运行演示",
+  "free.settings": "打开设置",
+  "evidence.fallback": "实时 OpenAlex 证据不可用，现显示模型生成的证据",
+  "evidence.openalex": "来源：OpenAlex",
   // ── 顶栏 ──
   'app.badge': 'RESEARCH AI',
   'app.title': 'RESEARCH TOPIC AGENT',
@@ -395,6 +409,20 @@ const zh: Dict = {
 }
 
 const en: Dict = {
+  "cfg.engine": "AI engine",
+  "cfg.free": "Free (Workers AI)",
+  "cfg.advanced": "Your own API key (Advanced)",
+  "cfg.freeNote": "Runs on Cloudflare Workers AI's free tier. Shared daily limit; no key needed.",
+  "cfg.keyPrivacy": "Your key stays in this browser and is sent directly to the provider — never to our server.",
+  "free.engine": "Free model · {model}",
+  "free.runs": "≈ {n} runs left today",
+  "free.exhausted": "Today's free AI quota is used up. It resets at {time} (00:00 UTC). You can still run the offline demo, or use your own API key under Settings → Advanced.",
+  "free.rateLimited": "Too many requests — try again in {n} seconds.",
+  "free.unavailable": "The free model is temporarily unavailable. Try again shortly or use the demo.",
+  "free.demo": "Run demo",
+  "free.settings": "Open settings",
+  "evidence.fallback": "Live OpenAlex evidence unavailable — showing model-generated evidence",
+  "evidence.openalex": "Source: OpenAlex",
   // ── Topbar ──
   'app.badge': 'RESEARCH AI',
   'app.title': 'RESEARCH TOPIC AGENT',

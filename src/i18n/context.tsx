@@ -32,6 +32,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  useEffect(() => {
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
+  }, [locale])
+
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l)
     localStorage.setItem(LOCALE_KEY, l)
