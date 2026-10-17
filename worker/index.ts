@@ -1,5 +1,5 @@
 import { HttpError, json, readBody, securityHeaders } from './http'
-import { estimateCost, models, normalizeSSE, validateLLM } from './llm'
+import { buildAIInput, estimateCost, models, normalizeSSE, validateLLM } from './llm'
 import { buckets, D1Store, quotaDecision, type UsageStore } from './quota'
 import { evidence } from './evidence'
 export interface Env {
@@ -47,7 +47,12 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
     let upstream: ReadableStream<Uint8Array>
     try {
       // The only inference destination is the Workers AI binding. No client URL is read.
-      const result = await env.AI.run(input.model as Parameters<Ai['run']>[0], { ...input, stream: true, ...(input.model === models[0].id ? { chat_template_kwargs: { enable_thinking: false } } : {}) })
+      const run = (json: boolean) => env.AI.run(input.model as Parameters<Ai['run']>[0], buildAIInput(input, json))
+      let result
+      try { result = await run(input.json) } catch (error) {
+        if (!input.json) throw error
+        result = await run(false)
+      }
       if (!(result instanceof ReadableStream)) throw new Error('Expected stream')
       upstream = result as ReadableStream<Uint8Array>
     } catch {

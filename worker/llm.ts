@@ -21,7 +21,15 @@ export function validateLLM(body: Record<string, unknown>) {
     if (typeof v !== 'number' || !Number.isFinite(v)) throw new HttpError(400, 'invalid_request')
     return Math.max(min, Math.min(max, v))
   }
-  return { model, messages, max_tokens: Math.floor(clamp(body.max_tokens, 3072, 64, 3072)), temperature: clamp(body.temperature, 0.6, 0, 1.2) }
+  return { model, messages, json: body.json === true, max_tokens: Math.floor(clamp(body.max_tokens, 3072, 64, 3072)), temperature: clamp(body.temperature, 0.6, 0, 1.2) }
+}
+export function buildAIInput(input: ReturnType<typeof validateLLM>, json = input.json) {
+  const { model, messages, max_tokens, temperature } = input
+  return {
+    model, messages, max_tokens, temperature, stream: true as const,
+    ...(model === models[0].id ? { chat_template_kwargs: { enable_thinking: false } } : {}),
+    ...(json ? { response_format: { type: 'json_object' as const } } : {}),
+  }
 }
 /** Incremental SSE parser: only public content and final accounting leave the Worker. */
 export function normalizeSSE(model: string, inputChars: number, settle: (actual: number) => Promise<void>) {

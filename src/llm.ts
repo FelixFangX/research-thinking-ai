@@ -27,14 +27,29 @@ interface ChatMessage {
 export function parseJSON<T>(text: string): T {
   if (text.length > 500_000) throw new Error('Response too large to parse')
   const cleaned = text.trim()
-  try {
-    return JSON.parse(cleaned)
-  } catch {
-    const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
-    if (fenced) return JSON.parse(fenced[1].trim())
-    const start = cleaned.indexOf('{')
-    const end = cleaned.lastIndexOf('}')
-    if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1))
+  const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const start = cleaned.indexOf('{'), end = cleaned.lastIndexOf('}')
+  const object = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned
+  for (const candidate of [cleaned, ...(fenced ? [fenced[1].trim()] : []), object]) {
+    try { return JSON.parse(candidate) } catch { /* Try the next extraction before repairing. */ }
+  }
+  const source = object.replace(/[“”]/g, '"')
+  let repaired = '', inString = false
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i]
+    if (inString && c === '\\') {
+      repaired += c + (source[++i] ?? '')
+      continue
+    }
+    if (c === '"') {
+      if (!inString) inString = true
+      else if (/^[\s]*[,}\]:]/.test(source.slice(i + 1))) inString = false
+      else { repaired += '\\"'; continue }
+    }
+    if (!inString && c === ',' && /^\s*[}\]]/.test(source.slice(i + 1))) continue
+    repaired += c
+  }
+  try { return JSON.parse(repaired) } catch {
     throw new Error('Failed to parse LLM response as JSON')
   }
 }
@@ -274,7 +289,7 @@ export class QuotaError extends Error {
 async function streamFree(messages: ChatMessage[], config: LLMConfig, onToken: (token: string) => void): Promise<string> {
   const res = await fetch(`${config.baseUrl.replace(/\/$/, '')}/api/llm`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: config.model, messages, max_tokens: 3072 }),
+    body: JSON.stringify({ model: config.model, messages, json: true, max_tokens: 3072 }),
   })
   if (!res.ok) {
     const text = await res.text()

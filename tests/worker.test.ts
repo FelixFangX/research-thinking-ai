@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { handle, type Env } from '../worker/index'
-import { estimateCost, models, normalizeSSE, validateLLM } from '../worker/llm'
+import { buildAIInput, estimateCost, models, normalizeSSE, validateLLM } from '../worker/llm'
 import { buckets, quotaDecision, type UsageStore } from '../worker/quota'
 import { searchOpenAlexEvidence } from '../src/evidence/openalex'
 import { QuotaError, streamLLM, testConnection } from '../src/llm'
@@ -47,6 +47,31 @@ describe('Worker validation and accounting', () => {
     expect(estimateCost(models[0].id, 4, 64)).toBeCloseTo((2 * 5500 + 64 * 36400) / 1e6)
     expect(estimateCost(models[1].id, 3, 64)).toBeCloseTo((9091 + 64 * 27273) / 1e6)
   })
+  it('maps JSON mode without forwarding client fields', () => {
+    const input = validateLLM({ ...body, json: true })
+    expect(buildAIInput(input)).toEqual({
+      model: models[0].id, messages: body.messages, max_tokens: 3072, temperature: 0.6,
+      stream: true, chat_template_kwargs: { enable_thinking: false },
+      response_format: { type: 'json_object' },
+    })
+    expect(buildAIInput(input, false)).not.toHaveProperty('response_format')
+    expect(buildAIInput(validateLLM(body))).not.toHaveProperty('response_format')
+    expect(buildAIInput(validateLLM({ ...body, model: models[1].id }))).not.toHaveProperty('chat_template_kwargs')
+  })
+  it('retries unsupported JSON mode with one reservation and settlement', async () => {
+    const f = fixture()
+    const reserve = vi.spyOn(f.store, 'reserve')
+    f.run.mockRejectedValueOnce(new Error('unsupported response_format'))
+    const res = await f.request({ ...body, json: true })
+    expect(res.status).toBe(200)
+    expect(await res.text()).toContain('"neurons":2')
+    await Promise.all(f.pending)
+    expect(f.run).toHaveBeenCalledTimes(2)
+    expect(f.run.mock.calls[0]).toEqual([models[0].id, expect.objectContaining({ response_format: { type: 'json_object' } })])
+    expect((f.run.mock.calls[1] as unknown as [string, unknown])[1]).not.toHaveProperty('response_format')
+    expect(reserve).toHaveBeenCalledTimes(1)
+    expect([...f.store.neurons.values()]).toEqual([2, 2])
+  })
   it('decides quota scope and rate limits', () => {
     expect(quotaDecision(2999, 0, 2, 3000, 600)).toBe('global')
     expect(quotaDecision(0, 599, 2, 3000, 600)).toBe('ip')
@@ -63,9 +88,10 @@ describe('Worker validation and accounting', () => {
     expect(JSON.stringify(f.run.mock.calls)).not.toContain('evil')
     expect([...f.store.neurons.values()]).toEqual([2, 2])
   })
-  it('refunds inference failures', async () => {
+  it.each([false, true])('refunds inference failures (JSON mode %s)', async json => {
     const f = fixture(); f.run.mockRejectedValue(new Error('secret'))
-    const res = await f.request(body)
+    const res = await f.request({ ...body, json })
+    expect(f.run).toHaveBeenCalledTimes(json ? 2 : 1)
     expect(res.status).toBe(502); expect(await res.text()).not.toContain('secret')
     expect([...f.store.neurons.values()]).toEqual([0, 0])
   })
@@ -97,6 +123,7 @@ describe('free client', () => {
     vi.stubGlobal('fetch', fetch)
     expect(await streamLLM(body.messages as { role: 'user'; content: string }[], { ...config, onUsage }, token)).toBe('hi')
     expect(onUsage).toHaveBeenCalledWith(4)
+    expect(fetch.mock.calls[0]).toEqual(['/api/llm', expect.objectContaining({ body: expect.stringContaining('"json":true') })])
     expect(fetch.mock.calls[0]).toEqual(['/api/llm', expect.objectContaining({ headers: { 'Content-Type': 'application/json' } })])
   })
   it.each(['quota_exhausted', 'rate_limited'] as const)('throws typed %s', async kind => {
