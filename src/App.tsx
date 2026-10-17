@@ -43,7 +43,7 @@ import type {
 } from './types'
 import { isLLMConfigured, QuotaError } from './llm'
 import { fetchEvidence } from './evidence/client'
-import { freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
+import { errorMessageNotice, freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
 import { evidenceSourceKey, type EvidenceOrigin } from './lib/evidenceSource'
 import { Ring, PipelineRing } from './components/Ring'
 import { updateTabLed, type InstrumentState } from './lib/tabLed'
@@ -285,8 +285,9 @@ function App() {
           detail: item.status === 'running' ? t('toast.stageFail') : item.detail,
         })),
       )
-      const msg = err instanceof Error ? err.message : t('toast.unknown')
-      toast('error', t('toast.fail', { msg: msg.slice(0, 120) }))
+      console.error('[research] run failed', err)
+      const message = errorMessageNotice(err, new Date(), locale)
+      toast('error', t(message.key, message.params))
       track('topic_agent_run_failed')
     },
   })
@@ -664,7 +665,7 @@ function App() {
                     <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
                     <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
                   </div>}
-                  {runMutation.isError && !notice && <div data-testid="quota-notice" role="alert" className="run-error"><p>{t('toast.fail', { msg: runMutation.error.message })}</p><button type="button" onClick={() => doRun()}>{t('error.retry')}</button><button type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button></div>}
+                  {runMutation.isError && !notice && <div data-testid="quota-notice" role="alert" className="run-error"><p>{(m => t(m.key, m.params))(errorMessageNotice(runMutation.error, new Date(), locale))}</p><button type="button" onClick={() => doRun()}>{t('error.retry')}</button><button type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button></div>}
                   <p data-testid="engine-line" className="muted">{settings.apiProvider === 'free'
                     ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
                     : settings.apiModel}

@@ -23,3 +23,11 @@ export function freeErrorNotice(error: unknown, now = new Date(), locale?: strin
   if (error instanceof Error && /^API 502\b/.test(error.message)) return { key: 'free.unavailable', params: {} }
   return null
 }
+
+/** Localized, user-facing error text. Raw API responses never reach the UI. */
+export function errorMessageNotice(error: unknown, now = new Date(), locale?: string): { key: string; params: Record<string, string | number> } {
+  const notice = freeErrorNotice(error, now, locale)
+  if (notice) return notice
+  if (error instanceof Error && /^API \d+\b/.test(error.message)) return { key: 'error.api', params: {} }
+  return error instanceof Error && error.message ? { key: 'toast.fail', params: { msg: error.message.slice(0, 120) } } : { key: 'toast.unknown', params: {} }
+}

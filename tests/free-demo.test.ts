@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isLLMConfigured, QuotaError, type LLMConfig } from '../src/llm'
-import { freeErrorNotice, runsLeft } from '../src/lib/quota'
+import { errorMessageNotice, freeErrorNotice, runsLeft } from '../src/lib/quota'
 import { evidenceSourceKey } from '../src/lib/evidenceSource'
 import { fetchEvidence } from '../src/evidence/client'
-import { t } from '../src/i18n/translations'
+import { messages, t } from '../src/i18n/translations'
 import { runResearch } from '../src/headless'
 import { createDefaultInput } from '../src/engine'
 
@@ -67,6 +67,15 @@ describe('free quota notices', () => {
     expect(freeErrorNotice(new Error('API 502: upstream_error'))?.key).toBe('free.unavailable')
     expect(freeErrorNotice(new Error('API 400: invalid_model'))).toBeNull()
     expect(freeErrorNotice(null)).toBeNull()
+  })
+  it('never exposes raw API responses in user-facing errors', () => {
+    expect(errorMessageNotice(new Error('API 502: {"error":"upstream_error"}'))).toEqual({ key: 'free.unavailable', params: {} })
+    expect(errorMessageNotice(new Error('API 400: {"error":"invalid_model"}'))).toEqual({ key: 'error.api', params: {} })
+    expect(errorMessageNotice('boom')).toEqual({ key: 'toast.unknown', params: {} })
+    for (const locale of [messages.en, messages.zh]) {
+      const text = locale['free.unavailable'] + locale['error.api']
+      expect(text).not.toMatch(/API \d|upstream_error|\{/)
+    }
   })
 })
 
