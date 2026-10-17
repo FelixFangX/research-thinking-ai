@@ -1,5 +1,7 @@
 # Research Topic Agent
 
+> Cloudflare 免登录演示（预览）说明见英文 README 的 "Cloudflare demo" 一节。
+
 [English](README.md)
 
 一个 AI 驱动的研究选题系统，将模糊的研究兴趣转化为可操作的、有证据支撑的研究方向。基于 React、TypeScript 和实时 LLM 集成构建。
