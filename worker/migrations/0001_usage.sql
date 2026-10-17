@@ -1,0 +1,6 @@
+CREATE TABLE usage (
+  bucket TEXT PRIMARY KEY,
+  neurons REAL NOT NULL DEFAULT 0,
+  requests INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL
+);

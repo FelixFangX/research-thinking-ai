@@ -12,11 +12,21 @@
 ```bash
 git clone https://github.com/FelixFangX/research-thinking-ai.git
 cd research-thinking-ai && pnpm install
-cp .env.example .env.local   # optional: Supabase + PostHog; leave empty to run locally
+cp .env.example .env.local   # optional; pnpm dev needs no environment variables
 pnpm dev                     # http://localhost:5173
 ```
 
-Without an LLM key the app offers a **mock preview**. Add a key under `[CFG]` for real runs.
+`pnpm dev` works without any environment variables. Live evidence and the free model need the Worker: use `pnpm build && npx wrangler@3 dev` locally, or deploy as described below. A **mock preview** is also available; configure your own key under Settings → Advanced for direct provider calls.
+
+The legacy `supabase/` folder is no longer used by the web app; it is kept for reference until it is retired.
+
+## Cloudflare demo (preview)
+
+Try https://research.ledring.dev — no sign-up required. The same Worker is also reachable at https://research-thinking.ledring.workers.dev. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching works on `*.workers.dev` and custom domains; the Workers Cache API is per-datacenter and best-effort.
+
+Shared daily caps reset at midnight UTC: **3,000 neurons/day globally** and **600/day per IP**, with **12 LLM requests/minute per IP**. A full run measured about **115 neurons**; usage varies by input and output (see the eval below).
+
+Bring your own key under **Settings → Advanced**: calls go directly from the browser to the provider and never touch the Worker. There are no third-party requests on page load, fonts are self-hosted, and analytics is off by default.
 
 ## Usage
 
@@ -63,7 +73,7 @@ The weekly watch (`.github/workflows/weekly-watch.yml`, Mondays) runs each topic
 
 20 sample interests ([`evals/interests.json`](./evals/interests.json)) run headless through the pipeline (`pnpm eval --mode <mode> --out ...`). Each run is scored on: all four stages match their schema, structure (≥3 paths, the selected path exists, evidence ids resolve), interest coverage (share of the interest's terms that appear in the evidence and paths), **on-topic evidence** (share of evidence titles that mention ≥2 of the interest's key terms), and **citations**: every evidence link is looked up in OpenAlex and counts as verified only if it resolves to a real work whose title matches.
 
-Measured on 2026-10-14:
+Measured on 2026-10-14 unless dated otherwise:
 
 | Mode | Schema valid | Structure OK | Interest coverage | On-topic evidence | Citations verified |
 |---|---|---|---|---|---|
@@ -71,8 +81,26 @@ Measured on 2026-10-14:
 | `openalex` (real evidence, deterministic stages) | 20/20 | 20/20 | 0.95 | 0.88 | **100%** (160/160) |
 | `edge` (deployed `openalex-search` function, before #9 is deployed) | 20/20 | 20/20 | 0.26 | **0.06** | 100% |
 | `llm` | not run yet (needs a key: `LLM_API_KEY=... pnpm eval --mode llm`) | | | | |
+| `worker` (first 5 interests, 2026-10-17, `@cf/zai-org/glm-4.7-flash`) | 100% | 100% | 1.00 | 0.85 | **100%** |
 
 \* The demo template echoes the interest, so its coverage is trivially 1.0. Raw results: [`evals/`](./evals). Demo-mode evidence is illustrative only. It isn't a citation, and the eval says so. `edge` mode checks production: `SUPABASE_URL=... SUPABASE_ANON_KEY=... pnpm eval --mode edge`.
+
+The `worker` run used **357 neurons total (~71 per run)**. On the same first 5 interests on 2026-10-17, `demo` scored 0.33 on-topic evidence / 0% citations verified, and `openalex` scored 0.85 / 100%. Raw Worker results: [`evals/results-worker.json`](./evals/results-worker.json). To reproduce (consumes live quota):
+
+```bash
+WORKER_URL=https://research-thinking.ledring.workers.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
+```
+
+## Deploy
+
+Use Node 20 for the Cloudflare deployment. See [`docs/cloudflare-demo.md`](./docs/cloudflare-demo.md) for configuration, endpoints, quotas and deployment checks.
+
+```bash
+npx wrangler@3 d1 migrations apply research-thinking --remote
+pnpm build && npx wrangler@3 deploy
+# Optional: give OpenAlex its own API budget
+npx wrangler@3 secret put OPENALEX_API_KEY
+```
 
 ## Testing
 

@@ -12,12 +12,12 @@ export interface Deps {
 }
 
 export function llmFromEnv(env = process.env): LLMConfig | null {
-  if (!env.LLM_API_KEY) return null
+  if (!env.LLM_API_KEY && env.LLM_PROVIDER !== 'free') return null
   return {
     provider: (env.LLM_PROVIDER ?? 'openai') as ApiProvider,
-    apiKey: env.LLM_API_KEY,
-    baseUrl: env.LLM_BASE_URL ?? 'https://api.openai.com/v1',
-    model: env.LLM_MODEL ?? 'gpt-4o-mini',
+    apiKey: env.LLM_API_KEY ?? '',
+    baseUrl: env.LLM_BASE_URL ?? (env.LLM_PROVIDER === 'free' ? '' : 'https://api.openai.com/v1'),
+    model: env.LLM_MODEL ?? (env.LLM_PROVIDER === 'free' ? '@cf/zai-org/glm-4.7-flash' : 'gpt-4o-mini'),
   }
 }
 

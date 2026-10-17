@@ -1,3 +1,5 @@
+import type { EvidenceOrigin } from './lib/evidenceSource'
+
 export type ParticipationMode = 'high' | 'low'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high' | 'frontier'
@@ -129,6 +131,7 @@ export interface SessionRecord {
   architecture: ArchitectureMode
   selectedPathId: string
   confidence: number
+  evidenceOrigin?: EvidenceOrigin
   fullResult?: AgentRunResult
   fullInput?: TopicInput
 }
@@ -174,7 +177,7 @@ export interface User {
 
 export type ColorScheme = 'crt-green' | 'cyberpunk' | 'amber' | 'classic'
 
-export type ApiProvider = 'openai' | 'anthropic' | 'minimax'
+export type ApiProvider = 'free' | 'openai' | 'anthropic' | 'minimax'
 
 export type IterationStatus = 'active' | 'completed' | 'abandoned'
 

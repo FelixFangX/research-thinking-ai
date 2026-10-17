@@ -15,13 +15,14 @@ import type {
   TopicInput,
   WorkflowStep,
 } from './types'
-import { streamLLM, type LLMConfig } from './llm'
+import { isLLMConfigured, streamLLM, type LLMConfig } from './llm'
 import { parseStage, RetrieveStage, MapStage, CompareStage, ConvergeStage } from './schemas'
 import { t, type Locale } from './i18n'
 
 /** pace: false skips the typing animation (headless runs, evals, MCP). */
 export interface RunOptions {
   pace?: boolean
+  streamLLM?: typeof streamLLM
 }
 
 export type StreamCallback = (stageId: string, text: string) => void
@@ -401,7 +402,7 @@ function buildEvidence(input: TopicInput, locale: Locale = 'zh'): EvidenceItem[]
         ? '产业白皮书：低延迟优先比可解释模块更关键'
         : 'Industry whitepaper: Low latency is more critical than interpretability modules',
       source: 'Industry Whitepaper',
-      url: 'https://www.posthog.com/',
+      url: `https://scholar.google.com/scholar?q=${encoded}`,
       year: 2024,
       tier: 'T3',
       claim: z
@@ -984,9 +985,32 @@ export async function runTopicAgentWithProgress(
   realEvidenceProvider?: () => Promise<EvidenceItem[]>,
   options: RunOptions = {},
 ): Promise<AgentRunResult> {
-  const useLLM = Boolean(llmConfig?.apiKey)
+  const useLLM = isLLMConfigured(llmConfig)
   const pace = options.pace !== false
   const emit = (lines: string[], stageId: string, cb: StreamCallback) => emitLines(lines, stageId, cb, '', pace)
+
+  const runStage = async <T>(stage: string, messages: Parameters<typeof streamLLM>[0], config: LLMConfig, parse: (raw: string) => T): Promise<T> => {
+    for (let attempt = 0; ; attempt++) {
+      let buf = '', thinkBuf = ''
+      if (attempt) {
+        onStream(stage, '')
+        onThinking?.(stage, '')
+      }
+      // Transport errors escape directly; only parsing/validation failures are retried.
+      const raw = await (options.streamLLM ?? streamLLM)(attempt ? [...messages, {
+        role: 'user', content: 'Your previous reply was not valid JSON. Reply again with ONLY the JSON object, no prose.',
+      }] : messages, config, chunk => {
+        buf += chunk
+        onStream(stage, buf)
+      }, onThinking ? chunk => {
+        thinkBuf += chunk
+        onThinking(stage, thinkBuf)
+      } : undefined)
+      try { return parse(raw) } catch (error) {
+        if (config.provider !== 'free' || attempt >= 1) throw error
+      }
+    }
+  }
 
   onProgress({
     id: 'retrieve',
@@ -996,9 +1020,13 @@ export async function runTopicAgentWithProgress(
     progress: 0,
   })
 
-  let evidence: EvidenceItem[]
+  let liveEvidence: EvidenceItem[] | undefined
   if (realEvidenceProvider) {
-    // Real OpenAlex API via Supabase Edge Function
+    try { liveEvidence = await realEvidenceProvider() } catch { /* Continue with model or demo evidence. */ }
+  }
+  let evidence: EvidenceItem[]
+  if (liveEvidence) {
+    // Live evidence is included in all subsequent stage prompts.
     onProgress({
       id: 'retrieve',
       name: t(locale, 'stg.retrieve'),
@@ -1006,7 +1034,7 @@ export async function runTopicAgentWithProgress(
       detail: t(locale, 'stg.retrieve.start'),
       progress: 0,
     })
-    evidence = await realEvidenceProvider()
+    evidence = liveEvidence
     await emit(
       [
         t(locale, 'mock.ret.1'),
@@ -1020,16 +1048,8 @@ export async function runTopicAgentWithProgress(
       onStream,
     )
   } else if (useLLM && llmConfig) {
-    let buf = ''
-    let thinkBuf = ''
-    const raw = await streamLLM(retrieveMessages(input, locale), llmConfig, (chunk) => {
-      buf += chunk
-      onStream('retrieve', buf)
-    }, onThinking ? (chunk) => {
-      thinkBuf += chunk
-      onThinking('retrieve', thinkBuf)
-    } : undefined)
-    evidence = parseStage(RetrieveStage, raw).evidence
+    const parsed = await runStage('retrieve', retrieveMessages(input, locale), llmConfig, raw => parseStage(RetrieveStage, raw))
+    evidence = parsed.evidence
   } else {
     evidence = buildEvidence(input, locale)
     const tc: Record<string, number> = { T1: 0, T2: 0, T3: 0 }
@@ -1079,16 +1099,7 @@ export async function runTopicAgentWithProgress(
   let complexity: ComplexityAssessment
   let architecture: ArchitectureDecision
   if (useLLM && llmConfig) {
-    let buf = ''
-    let thinkBuf = ''
-    const raw = await streamLLM(mapMessages(input, evidence, locale), llmConfig, (chunk) => {
-      buf += chunk
-      onStream('map', buf)
-    }, onThinking ? (chunk) => {
-      thinkBuf += chunk
-      onThinking('map', thinkBuf)
-    } : undefined)
-    const parsed = parseStage(MapStage, raw)
+    const parsed = await runStage('map', mapMessages(input, evidence, locale), llmConfig, raw => parseStage(MapStage, raw))
     complexity = parsed.complexity
     architecture = parsed.architecture
   } else {
@@ -1129,16 +1140,7 @@ export async function runTopicAgentWithProgress(
 
   let candidates: CandidatePath[]
   if (useLLM && llmConfig) {
-    let buf = ''
-    let thinkBuf = ''
-    const raw = await streamLLM(compareMessages(input, evidence, architecture, locale), llmConfig, (chunk) => {
-      buf += chunk
-      onStream('compare', buf)
-    }, onThinking ? (chunk) => {
-      thinkBuf += chunk
-      onThinking('compare', thinkBuf)
-    } : undefined)
-    const parsed = parseStage(CompareStage, raw)
+    const parsed = await runStage('compare', compareMessages(input, evidence, architecture, locale), llmConfig, raw => parseStage(CompareStage, raw))
     candidates = parsed.candidates
       .map((c) => scoreCandidate(c, input.decisionWeights))
       .sort((a, b) => b.score - a.score)
@@ -1185,16 +1187,8 @@ export async function runTopicAgentWithProgress(
 
   let recommendation: Recommendation
   if (useLLM && llmConfig) {
-    let buf = ''
-    let thinkBuf = ''
-    const raw = await streamLLM(convergeMessages(input, candidates, locale), llmConfig, (chunk) => {
-      buf += chunk
-      onStream('converge', buf)
-    }, onThinking ? (chunk) => {
-      thinkBuf += chunk
-      onThinking('converge', thinkBuf)
-    } : undefined)
-    recommendation = parseStage(ConvergeStage, raw).recommendation
+    const parsed = await runStage('converge', convergeMessages(input, candidates, locale), llmConfig, raw => parseStage(ConvergeStage, raw))
+    recommendation = parsed.recommendation
   } else {
     const topPath = candidates[0]
     const conflicts = evidence.filter((e) => e.conflictsWith.length > 0)

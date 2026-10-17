@@ -19,7 +19,7 @@ export function NoLLMDialog({ onConfigure, onMockPreview, onCancel }: Props) {
           <div className="nollm-icon" aria-hidden="true">⚠</div>
           <p className="nollm-desc">{t('nollm.desc')}</p>
           <div className="nollm-actions">
-            <button className="btn btn-primary" onClick={onConfigure} type="button">
+            <button className="btn btn-secondary" onClick={onConfigure} type="button">
               {t('nollm.configure')}
             </button>
             <button className="btn btn-ghost nollm-mock-btn" onClick={onMockPreview} type="button">
