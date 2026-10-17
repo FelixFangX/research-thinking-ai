@@ -18,7 +18,7 @@ describe('evidence source labels', () => {
   ] as const)('labels %s accurately in both locales', (origin, label) => {
     const key = evidenceSourceKey(origin)!
     expect(t('en', key)).toBe(label)
-    expect(t('zh', key)).toBe(label)
+    expect(t('zh', key)).toMatch(/^来源：/)
   })
   it('leaves old history entries without a label', () => {
     expect(evidenceSourceKey(undefined)).toBeNull()
@@ -70,7 +70,7 @@ describe('free quota notices', () => {
   })
   it('never exposes raw API responses in user-facing errors', () => {
     expect(errorMessageNotice(new Error('API 502: {"error":"upstream_error"}'))).toEqual({ key: 'free.unavailable', params: {} })
-    expect(errorMessageNotice(new Error('API 400: {"error":"invalid_model"}'))).toEqual({ key: 'error.api', params: {} })
+    expect(errorMessageNotice(new Error('API 400: {"error":"invalid_model"}'))).toEqual({ key: 'error.input', params: {} })
     expect(errorMessageNotice('boom')).toEqual({ key: 'toast.unknown', params: {} })
     for (const locale of [messages.en, messages.zh]) {
       const text = locale['free.unavailable'] + locale['error.api']

@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n'
 import type { ToastItem } from '../hooks/useToast'
 
 const ICONS: Record<string, string> = {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ToastContainer({ toasts, onDismiss }: Props) {
+  const { t: translate } = useI18n()
   if (toasts.length === 0) return null
 
   return (
@@ -25,7 +27,7 @@ export function ToastContainer({ toasts, onDismiss }: Props) {
             className="toast-close"
             onClick={() => onDismiss(t.id)}
             type="button"
-            aria-label="Dismiss"
+            aria-label={translate('aria.dismiss')}
           >
             ×
           </button>

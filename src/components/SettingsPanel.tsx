@@ -20,7 +20,6 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
   const [showKey, setShowKey] = useState(false)
   const [persist, setPersist] = useState(() => isPersistEnabled())
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
-  const [testMsg, setTestMsg] = useState('')
 
   const handleTestConnection = useCallback(async () => {
     if (!settings.apiKey) return
@@ -32,7 +31,6 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
       model: settings.apiModel,
     })
     setTestStatus(result.ok ? 'ok' : 'fail')
-    setTestMsg(result.message)
     setTimeout(() => setTestStatus('idle'), 4000)
   }, [settings.apiProvider, settings.apiBaseUrl, settings.apiKey, settings.apiModel])
 
@@ -161,8 +159,8 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                     >
                       {testStatus === 'testing' ? t('cfg.testing') : testStatus === 'ok' ? t('cfg.testOk') : testStatus === 'fail' ? t('cfg.testFail') : t('cfg.testBtn')}
                     </button>
-                    {testStatus === 'fail' && testMsg && (
-                      <span className="muted api-test-msg">{testMsg}</span>
+                    {testStatus === 'fail' && (
+                      <span className="muted api-test-msg">{t('cfg.testFail')}</span>
                     )}
                   </div>
                 )}
@@ -235,13 +233,15 @@ export function SettingsPanel({ models = FREE_MODELS, settings, userId, onUpdate
                 <button
                   type="button"
                   className={`scheme-btn ${locale === 'zh' ? 'active' : ''}`}
+                  lang="zh-CN"
                   onClick={() => setLocale('zh')}
                 >
-                  中文
+                  {locale === 'zh' ? '中文' : 'Chinese'}
                 </button>
                 <button
                   type="button"
                   className={`scheme-btn ${locale === 'en' ? 'active' : ''}`}
+                  lang="en"
                   onClick={() => setLocale('en')}
                 >
                   English

@@ -1,3 +1,6 @@
+import { EvidenceClaim } from './EvidenceClaim'
+import { formatArchitecture } from '../engine'
+import type { ArchitectureMode } from '../types'
 import { TierChip } from './TierChip'
 import { PlanRuler } from './PlanRuler'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -45,7 +48,7 @@ function tryParseJSON(text: string): unknown | null {
 }
 
 function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   if (!data || typeof data !== 'object') return null
   const obj = data as Record<string, unknown>
 
@@ -58,9 +61,9 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
               <span className="sp-card-badge">{String(e.id ?? `E${i + 1}`)}</span>
               <TierChip tier={String(e.tier ?? 'T3')} />
             </div>
-            <h4 className="sp-card-title"><a href={String(e.url ?? '')} target="_blank" rel="noopener noreferrer">{String(e.title ?? '')}</a></h4>
-            <p className="sp-card-claim">{String(e.claim ?? '')}</p>
-            <div className="sp-card-meta">
+            <h4 className="sp-card-title" data-user-content><a href={String(e.url ?? '')} target="_blank" rel="noopener noreferrer">{String(e.title ?? '')}</a></h4>
+            <p className="sp-card-claim"><EvidenceClaim claim={String(e.claim ?? '')} /></p>
+            <div className="sp-card-meta" data-user-content>
               <span>{String(e.source ?? '')}</span>
               <span>{String(e.year ?? '')}</span>
               <span>{t('ui.relevance')} {String(e.relevance ?? '—')}</span>
@@ -95,8 +98,8 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
               />
             </div>
             <div className="sp-card-badge-row">
-              <span className={`sp-level-tag sp-level-${String(c.level ?? 'medium')}`}>
-                {String(c.level ?? 'medium')}
+              <span className={`sp-level-tag sp-level-${locale === 'zh' ? ({ low: '低', medium: '中', high: '高', frontier: '前沿' }[String(c.level ?? 'medium')] ?? String(c.level)) : String(c.level ?? 'medium')}`}>
+                {locale === 'zh' ? ({ low: '低', medium: '中', high: '高', frontier: '前沿' }[String(c.level ?? 'medium')] ?? String(c.level)) : String(c.level ?? 'medium')}
               </span>
             </div>
             {Array.isArray(c.rationale) && (
@@ -113,7 +116,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
             <div className="sp-card-header">
               <span className="sp-card-badge">{t('r.architecture')}</span>
             </div>
-            <h4 className="sp-card-title">{String(a.mode ?? '').replace(/_/g, ' ')}</h4>
+            <h4 className="sp-card-title">{formatArchitecture(String(a.mode ?? 'single_agent') as ArchitectureMode, locale)}</h4>
             <p className="sp-card-claim">{String(a.reason ?? '')}</p>
             {Array.isArray(a.modules) && (
               <div className="sp-module-flow">
@@ -156,7 +159,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
                 </div>
               ))}
             </div>
-            <div className="sp-card-meta">
+            <div className="sp-card-meta" data-user-content>
               <span>{t('ui.confidence')} {String(c.confidence ?? '—')}%</span>
               {Array.isArray(c.evidenceIds) && (
                 <span>{(c.evidenceIds as string[]).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>[{id}]</a>)}</span>
@@ -245,7 +248,7 @@ function ThinkingBlock({ text, isRunning }: { text: string; isRunning: boolean }
         className={`sp-thinking-body ${expanded ? '' : 'stream-collapsed'}`}
         ref={scrollRef}
       >
-        <div className="sp-md-content">
+        <div className="sp-md-content" data-user-content>
           <Markdown remarkPlugins={remarkPlugins} components={markdownComponents}>{text}</Markdown>
         </div>
       </div>
@@ -309,7 +312,7 @@ function StageContent({
         className={`stream-scroll ${expanded ? 'stream-expanded' : ''}`}
         ref={scrollRef}
       >
-        <div className="sp-md-content">
+        <div className="sp-md-content" data-user-content>
           {(!isDone || parsedData === null) && <Markdown remarkPlugins={remarkPlugins} components={markdownComponents}>{thinking}</Markdown>}
           {isRunning && <span className="stream-cursor">█</span>}
         </div>
@@ -349,7 +352,7 @@ export function StreamPanel({ pipeline, streamTexts, thinkingTexts, result }: Pr
       })}</div>
       <h2>{t('sp.title')}</h2>
 
-      <nav className="sp-step-nav" aria-label="Pipeline stages">
+      <nav className="sp-step-nav" aria-label={t('aria.stages')}>
         {pipeline.map((stage, i) => {
           const isIdle = stage.status === 'idle'
           const isActive = activeStages[activeIdx]?.id === stage.id

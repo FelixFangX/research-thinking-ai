@@ -1,3 +1,4 @@
+import { EvidenceClaim } from './components/EvidenceClaim'
 import { TierChip } from './components/TierChip'
 import { PlanRuler } from './components/PlanRuler'
 import { type CSSProperties, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -92,8 +93,20 @@ function App() {
       decisionWeights: getDefaultWeights(settings.defaultMode),
     }
   })
-  const [result, setResult] = useState<AgentRunResult | null>(null)
   const [pipeline, setPipeline] = useState<PipelineStageProgress[]>(STAGE_TEMPLATE)
+  const previousLocale = useRef(locale)
+  useEffect(() => {
+    const oldDefaults = createDefaultInput(previousLocale.current)
+    const newDefaults = createDefaultInput(locale)
+    setInput(previous => {
+      const fields = ['researchInterest', 'problemDomain', 'seedIdea', 'constraints'] as const
+      if (!fields.every(key => previous[key] === oldDefaults[key])) return previous
+      return { ...previous, ...Object.fromEntries(fields.map(key => [key, newDefaults[key]])) }
+    })
+    setPipeline(previous => previous.map(stage => ({ ...stage, name: t(`stg.${stage.id}`), detail: stage.status === 'idle' ? t('stg.idle') : stage.detail })))
+    previousLocale.current = locale
+  }, [locale, t])
+  const [result, setResult] = useState<AgentRunResult | null>(null)
   const [streamTexts, setStreamTexts] = useState<Record<string, string>>({})
   const [thinkingTexts, setThinkingTexts] = useState<Record<string, string>>({})
   const { records: history, addRecord: addHistory } = useHistory('anonymous')
@@ -211,7 +224,7 @@ function App() {
         locale,
         llmCfg,
         onThinking,
-        async () => {
+        mockRef.current ? undefined : async () => {
           const { evidence, source } = await fetchEvidence(payload)
           origin = source
           return evidence
@@ -438,7 +451,7 @@ function App() {
   const activeIndex = Math.max(0, pipeline.findIndex(stage => stage.status === 'running'))
   const stateText = instrumentState === 'processing' ? t('inst.processing', { stage: pipeline[activeIndex].name, n: activeIndex + 1 })
     : instrumentState === 'done' ? t('inst.done', { n: result?.candidates.length ?? 0, c: result?.evidence.length ?? 0 })
-    : instrumentState === 'error' ? t('inst.error', { msg: notice ? t(notice.key, notice.params) : runMutation.error?.message ?? t('toast.unknown') }) : t('inst.idle')
+    : instrumentState === 'error' ? t('inst.error', { msg: notice ? t(notice.key, notice.params) : t(errorMessageNotice(runMutation.error, new Date(), locale).key) }) : t('inst.idle')
   useEffect(() => {
     document.documentElement.dataset.state = instrumentState
     const refresh = () => updateTabLed(instrumentState, t('app.title'), t(`inst.tab.${instrumentState}`))
@@ -477,7 +490,7 @@ function App() {
             type="button"
             aria-label={t('aria.language')}
           >
-            {locale === 'zh' ? t('language.en') : t('language.zh')}
+            <span lang={locale === 'zh' ? 'en' : 'zh-CN'}>{locale === 'zh' ? 'EN' : '中文'}</span>
           </button>
           <button className="theme-pill" type="button" onClick={cycleTheme}>{theme === 'auto' ? t('inst.auto') : t(`cfg.theme.${theme}`)}</button>
           <a className="github-link" href="https://github.com/FelixFangX/research-thinking-ai" aria-label={t('inst.github')}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03a9.6 9.6 0 0 1 5 0c1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg></a>
@@ -559,7 +572,7 @@ function App() {
                     }
                   }}
                 >
-                  <strong>{item.interest.slice(0, 20)}</strong>
+                  <strong data-user-content>{item.interest.slice(0, 20)}</strong>
                   <div className="muted">
                     {formatMode(item.mode, locale).slice(0, 4)} · {item.complexityScore} · {formatArchitecture(item.architecture, locale)}
                   </div>
@@ -631,6 +644,7 @@ function App() {
                   <label>
                     {t('ws.interest')}
                     <textarea
+                      data-user-content
                       value={input.researchInterest}
                       onChange={(e) => updateField('researchInterest', e.target.value)}
                       rows={3}
@@ -676,6 +690,7 @@ function App() {
                   <label>
                     {t('ws.domain')}
                     <input
+                      data-user-content
                       value={input.problemDomain}
                       onChange={(e) => updateField('problemDomain', e.target.value)}
                       placeholder={t('ws.domain.ph')}
@@ -684,6 +699,7 @@ function App() {
                   <label>
                     {t('ws.idea')}
                     <textarea
+                      data-user-content
                       value={input.seedIdea}
                       onChange={(e) => updateField('seedIdea', e.target.value)}
                       rows={3}
@@ -693,6 +709,7 @@ function App() {
                   <label>
                     {t('ws.constraints')}
                     <textarea
+                      data-user-content
                       value={input.constraints}
                       onChange={(e) => updateField('constraints', e.target.value)}
                       rows={2}
@@ -764,7 +781,7 @@ function App() {
                       <article>
                         <h3>{t('r.complexity')}</h3>
                         <p className="big">{result.complexity.score}</p>
-                        <p className="muted">{result.complexity.level}</p>
+                        <p className="muted">{locale === 'zh' ? ({ low: '低', medium: '中', high: '高', frontier: '前沿' }[result.complexity.level]) : result.complexity.level}</p>
                         <ul>
                           {result.complexity.rationale.map((item) => (
                             <li key={item}>{citationText(item)}</li>
@@ -918,13 +935,13 @@ function App() {
                                 })
                               }
                             >
-                              {item.title}
+                              <span data-user-content>{item.title}</span>
                             </a>
 
                           </div>
-                          <div className="evidence-metadata">{item.source} · {item.year} · <TierChip tier={item.tier} /></div>
+                          <div className="evidence-metadata" data-user-content>{item.source} · {item.year} · <TierChip tier={item.tier} /></div>
                           <span data-testid="verify-tag" className={`verify-tag ${evidenceOrigin === 'openalex' || evidenceOrigin === 'crossref' ? 'verified' : 'unverified'}`}>{evidenceOrigin === 'openalex' || evidenceOrigin === 'crossref' ? `${t('inst.verified')} · ${evidenceOrigin === 'crossref' ? 'Crossref' : 'OpenAlex'}` : t(evidenceOrigin === 'template' ? 'inst.sample' : 'inst.unverified')}</span>
-                          <p className="evidence-claim">{item.claim}</p>
+                          <p className="evidence-claim"><EvidenceClaim claim={item.claim} /></p>
                           <div className="evidence-metrics">
                             <span className="evidence-metric">
                               <span className="evidence-metric-label">{t('ui.relevance')}</span>

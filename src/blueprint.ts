@@ -42,11 +42,11 @@ export function getPersonas(locale: Locale) {
 export function getJourney(locale: Locale) {
   return locale === 'zh'
     ? [
-        'Onboarding: 选择高参与共创 / 低参与自动 + 后纠偏',
-        'Intake: 填写兴趣、问题域、约束与决策权重',
-        'Pipeline: 检索 -> 梳理 -> 比较 -> 收敛',
-        'Decision: 推荐路径 + 备选 + 可证伪实验 + 止损条件',
-        'Follow-up: 7日行动计划 + 会话回访与迭代',
+        '开始： 选择高参与共创 / 低参与自动 + 后纠偏',
+        '输入： 填写兴趣、问题域、约束与决策权重',
+        '流程： 检索 -> 梳理 -> 比较 -> 收敛',
+        '决策： 推荐路径 + 备选 + 可证伪实验 + 止损条件',
+        '跟进： 7日行动计划 + 会话回访与迭代',
       ]
     : [
         'Onboarding: Choose high-participation co-creation or low-participation auto flow + late override.',
@@ -60,11 +60,11 @@ export function getJourney(locale: Locale) {
 export function getUxDeliverables(locale: Locale) {
   return locale === 'zh'
     ? [
-        'IA 信息架构：产品蓝图 / 选题工作台 / 上线运维',
+        '信息架构：产品蓝图 / 选题工作台 / 上线运维',
         '关键流程图：高参与逐步确认、低参与自动纠偏、冲突证据回退',
         '页面规范：输入校验、空态、错误态、加载态、结果态',
-        '组件规范：EvidenceCard、PathScoreCard、HumanGateChecklist、PipelineStepper',
-        '可访问性：键盘操作、颜色对比、aria 标签、可读性文案',
+        '组件规范：证据卡片、路径评分卡、人工确认清单、流程步骤',
+        '可访问性：键盘操作、颜色对比、无障碍标签、可读性文案',
       ]
     : [
         'IA: Product blueprint / topic workspace / launch & ops',
@@ -79,37 +79,37 @@ export function getServiceBlueprint(locale: Locale): ServiceSpec[] {
   return locale === 'zh'
     ? [
         {
-          service: 'BFF API Gateway',
+          service: 'API 网关',
           role: '鉴权、速率限制、请求编排、统一审计日志',
           stack: 'Next.js Route Handlers / Fastify + Redis',
           slo: 'P95 < 300ms (非LLM路径)',
         },
         {
-          service: 'Orchestrator',
+          service: '流程编排',
           role: '根据复杂度选择单Agent/工作流/多Agent/RAG/KG',
           stack: 'Temporal / Trigger.dev / Celery',
           slo: '任务成功率 > 99.0%',
         },
         {
-          service: 'Retriever Service',
+          service: '文献检索服务',
           role: '多源检索（OpenAlex、Semantic Scholar、Crossref）与去重',
           stack: 'Python + pgvector + BM25 hybrid search',
           slo: '检索召回关键论文命中率 > 85%',
         },
         {
-          service: 'Evidence Graph Service',
+          service: '证据图谱服务',
           role: '证据实体抽取、引用链构图、冲突检测',
           stack: 'Neo4j / PostgreSQL + graph projection',
           slo: '冲突检测延迟 < 2s',
         },
         {
-          service: 'Recommendation Service',
+          service: '推荐服务',
           role: '候选路径评分、可证伪实验生成、止损条件建议',
           stack: 'LLM + rule engine + deterministic scorer',
           slo: '推荐可解释覆盖率 > 90%',
         },
         {
-          service: 'Observability & Eval',
+          service: '监测与评估',
           role: '产品指标 + AI质量指标 + 回放',
           stack: 'PostHog + OpenTelemetry + warehouse',
           slo: '核心埋点到达率 > 99%',
@@ -161,27 +161,27 @@ export function getSecurityControls(locale: Locale): SecurityRule[] {
         {
           id: 'S1',
           rule: '默认不上传用户原文全文；仅上传必要结构化摘要。',
-          control: 'PII redaction + 字段级白名单',
+          control: '个人信息脱敏与字段白名单',
         },
         {
           id: 'S2',
           rule: '所有推荐结论必须带引用证据ID。',
-          control: 'response schema guard + citation validator',
+          control: '输出结构校验与引用核验',
         },
         {
           id: 'S3',
           rule: '冲突证据影响结论时必须阻断自动拍板。',
-          control: 'policy engine hard gate',
+          control: '策略规则强制检查',
         },
         {
           id: 'S4',
           rule: '低可信来源不参与最终评分权重上限。',
-          control: 'tier-aware weighted scorer',
+          control: '按来源级别加权评分',
         },
         {
           id: 'S5',
           rule: '用户会话与评审日志可追溯。',
-          control: 'immutable audit log + event signature',
+          control: '不可变审计日志与事件签名',
         },
       ]
     : [
@@ -221,28 +221,28 @@ export function getProductKpis(locale: Locale): ProductMetric[] {
           name: 'activation_24h',
           definition: '注册后24h内完成首个选题流程',
           target: '>= 45%',
-          owner: 'Growth',
+          owner: '增长团队',
         },
         {
           id: 'P2',
           name: 'time_to_shortlist',
           definition: '从输入到形成3条候选路径的中位时长',
           target: '<= 20 分钟',
-          owner: 'Product',
+          owner: '产品团队',
         },
         {
           id: 'P3',
           name: 'week1_retention',
           definition: '7天内至少回访一次并迭代选题',
           target: '>= 35%',
-          owner: 'Growth',
+          owner: '增长团队',
         },
         {
           id: 'P4',
           name: 'mentor_share_rate',
           definition: '用户将结果分享给导师/同伴评审的比例',
           target: '>= 40%',
-          owner: 'Product',
+          owner: '产品团队',
         },
       ]
     : [
@@ -285,28 +285,28 @@ export function getAiKpis(locale: Locale): ProductMetric[] {
           name: 'citation_grounding_rate',
           definition: '建议文本中可追溯引用句占比',
           target: '>= 90%',
-          owner: 'Applied AI',
+          owner: 'AI 应用团队',
         },
         {
           id: 'A2',
           name: 'conflict_detection_recall',
           definition: '标注冲突样本的识别召回率',
           target: '>= 80%',
-          owner: 'Applied AI',
+          owner: 'AI 应用团队',
         },
         {
           id: 'A3',
           name: 'human_acceptance_rate',
           definition: '人工评审后接受系统推荐的比例',
           target: '>= 55%',
-          owner: 'Applied AI',
+          owner: 'AI 应用团队',
         },
         {
           id: 'A4',
           name: 'hallucination_incident_rate',
           definition: '每千次会话中出现无依据关键结论的次数',
           target: '<= 2',
-          owner: 'AI Safety',
+          owner: 'AI 安全团队',
         },
       ]
     : [
@@ -345,7 +345,7 @@ export function getReleasePlan(locale: Locale) {
   return locale === 'zh'
     ? [
         'M0(2周): 闭测版，人工监督 + 规则硬门',
-        'M1(4周): 公开Beta，支持真实检索API与会话回放',
+        'M1(4周): 公开测试版，支持真实检索API与会话回放',
         'M2(8周): 增加图谱检索、团队协作、A/B实验',
         'M3(12周): 付费版上线，SLA与安全合规审计',
       ]
