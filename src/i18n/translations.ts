@@ -3,6 +3,16 @@ export type Locale = 'zh' | 'en'
 type Dict = Record<string, string>
 
 const zh: Dict = {
+  'inst.directions': '02 — 研究方向',
+  'inst.plan': '03 — 行动计划',
+  'inst.recommended': '推荐',
+  'inst.noEvents': '暂无事件',
+  'inst.tier': '第 {n} 级，共 3 级',
+  'inst.verified': '✓ 已核验',
+  'inst.unverified': '? 未核验 · 模型',
+  'inst.sample': '? 示例 · 演示',
+  'inst.copied': '已复制',
+
   'inst.brand': 'LEDRING / TOOLS',
   'inst.brief': '01 — 研究简报',
   'inst.title': '找到你的下一个研究方向。',
@@ -478,6 +488,16 @@ const zh: Dict = {
 }
 
 const en: Dict = {
+  'inst.directions': '02 — DIRECTIONS',
+  'inst.plan': '03 — PLAN',
+  'inst.recommended': 'RECOMMENDED',
+  'inst.noEvents': 'NO EVENTS YET',
+  'inst.tier': 'Tier {n} of 3',
+  'inst.verified': '✓ VERIFIED',
+  'inst.unverified': '? UNVERIFIED · MODEL',
+  'inst.sample': '? SAMPLE · DEMO',
+  'inst.copied': 'Copied',
+
   'inst.brand': 'LEDRING / TOOLS',
   'inst.brief': '01 — BRIEF',
   'inst.title': 'Find your next research direction.',

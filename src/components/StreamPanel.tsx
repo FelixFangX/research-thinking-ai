@@ -1,3 +1,5 @@
+import { TierChip } from './TierChip'
+import { PlanRuler } from './PlanRuler'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -51,9 +53,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
           <div key={i} className="sp-data-card sp-evidence-card">
             <div className="sp-card-header">
               <span className="sp-card-badge">{String(e.id ?? `E${i + 1}`)}</span>
-              <span className={`sp-tier sp-tier-${String(e.tier ?? 'T2').toLowerCase()}`}>
-                {String(e.tier ?? 'T2')}
-              </span>
+              <TierChip tier={String(e.tier ?? 'T3')} />
             </div>
             <h4 className="sp-card-title"><a href={String(e.url ?? '')} target="_blank" rel="noopener noreferrer">{String(e.title ?? '')}</a></h4>
             <p className="sp-card-claim">{String(e.claim ?? '')}</p>
@@ -131,14 +131,14 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
   if (stageId === 'compare' && Array.isArray(obj.candidates)) {
     return (
       <div className="sp-data-grid">
-        {(obj.candidates as Array<Record<string, unknown>>).map((c, i) => (
+        {[...(obj.candidates as Array<Record<string, unknown>>)].sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0)).map((c, i) => (
           <div key={i} className="sp-data-card sp-candidate-card">
             <div className="sp-card-header">
-              <span className="sp-card-badge">{String(c.id ?? `P${i + 1}`)}</span>
+              <span className="direction-numeral" data-testid="direction-numeral">{String(i + 1).padStart(2, '0')}</span><span className="sp-card-badge">{String(c.id ?? `P${i + 1}`)}</span>
               <span className="sp-score-badge">{t('ui.score')} {String(c.score ?? '—')}</span>
             </div>
             <h4 className="sp-card-title">{String(c.name ?? '')}</h4>
-            <p className="sp-card-claim">{String(c.hypothesis ?? '')}</p>
+            <p className="sp-card-claim">{String(c.hypothesis ?? '')}</p><p className="sp-card-claim">{String(c.method ?? '')}</p>
             <div className="sp-metric-bars">
               {(['novelty', 'feasibility', 'impact', 'risk', 'evidenceCoverage'] as const).map((k) => (
                 <div key={k} className="sp-metric-row">
@@ -156,7 +156,7 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
             <div className="sp-card-meta">
               <span>{t('ui.confidence')} {String(c.confidence ?? '—')}%</span>
               {Array.isArray(c.evidenceIds) && (
-                <span>{(c.evidenceIds as string[]).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}</span>
+                <span>{(c.evidenceIds as string[]).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>[{id}]</a>)}</span>
               )}
             </div>
           </div>
@@ -189,29 +189,9 @@ function DataCards({ data, stageId }: { data: unknown; stageId: string }) {
         {Array.isArray(r.nextSevenDays) && (
           <div className="sp-data-card sp-plan-card">
             <div className="sp-card-header">
-              <span className="sp-card-badge">{t('ui.plan')}</span>
+              <span className="sp-card-badge">{t('inst.plan')}</span>
             </div>
-            <div className="sp-plan-timeline">
-              {(r.nextSevenDays as string[]).map((d, i) => {
-                const dayMatch = String(d).match(/^(Day\s*\d[\d\s\-–~]*:?\s*)/i)
-                const dayLabel = dayMatch ? dayMatch[1].replace(/:?\s*$/, '') : t('ui.day', { n: i + 1 })
-                const dayDesc = dayMatch ? String(d).slice(dayMatch[0].length) : String(d)
-                return (
-                  <div key={i} className="sp-plan-step">
-                    <div className="sp-plan-step-indicator">
-                      <span className="sp-plan-dot" />
-                      {i < ((r.nextSevenDays as string[]).length - 1) && (
-                        <span className="sp-plan-line" />
-                      )}
-                    </div>
-                    <div className="sp-plan-step-content">
-                      <span className="sp-plan-day-label">{dayLabel}</span>
-                      <span className="sp-plan-day-desc">{dayDesc}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <PlanRuler tasks={r.nextSevenDays as string[]} />
           </div>
         )}
 
@@ -358,7 +338,12 @@ export function StreamPanel({ pipeline, streamTexts, thinkingTexts, result }: Pr
   if (!hasAny) return null
 
   return (
-    <section className="stream-panel panel animate-in" id="sec-thinking">
+    <section className="stream-panel panel animate-in instrument-output" id="sec-thinking">
+      <div className="output-ruler" aria-hidden="true">{Array.from({ length: 48 }, (_, i) => {
+        const completed = pipeline.filter(stage => stage.status === 'done').length
+        const progress = pipeline.reduce((sum, stage) => sum + (stage.status === 'done' ? 100 : Math.max(0, Math.min(100, stage.progress))), 0) / (Math.max(pipeline.length, 1) * 100)
+        return <span key={i} className={`${i < Math.floor(progress * 48) ? 'lit' : ''} ${completed === pipeline.length ? 'settled' : ''}`} />
+      })}</div>
       <h2>{t('sp.title')}</h2>
 
       <nav className="sp-step-nav" aria-label="Pipeline stages">

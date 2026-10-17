@@ -1,3 +1,5 @@
+import { TierChip } from './components/TierChip'
+import { PlanRuler } from './components/PlanRuler'
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { track } from './analytics'
@@ -291,7 +293,7 @@ function App() {
 
   const citationText = (value: string) => value.split(/(\bE\d+\b)/g).map((part, index) =>
     result?.evidence.some(e => e.id === part)
-      ? <a data-testid="citation" className="citation-chip" key={index} href={`#evidence-${part}`}>{part}</a> : part)
+      ? <a data-testid="citation" className="citation-chip" key={index} href={`#evidence-${part}`}>[{part}]</a> : part)
 
   const selectedPath = useMemo(() => {
     if (!result) return null
@@ -597,7 +599,7 @@ function App() {
           </div>
 
           <details className="events-log" open={window.matchMedia('(min-width: 900px)').matches || undefined}><summary><span className="desktop-events">{t('sidebar.events')}</span><span className="mobile-events">{t('inst.log')}</span></summary>
-            <ul className="analytics-list">{events.map((event, index) => <li key={index}>{event}</li>)}</ul>
+            <ul className="analytics-list">{events.length === 0 && <li>{t('inst.noEvents')}</li>}{events.map((event, index) => <li key={index}>{event}</li>)}</ul>
           </details>
         </aside>
 
@@ -652,7 +654,7 @@ function App() {
                   </div>
 
                   <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
-                    <Ring />{runMutation.isPending ? t('ws.running') : t('ws.run')}
+                    <Ring /><span className="run-label">{runMutation.isPending ? t('ws.running') : t('ws.run')}</span>
                     <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘↵' : 'Ctrl+↵'}</kbd>
                   </button>
                   {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className={`quota-notice ${notice.key === 'free.unavailable' ? 'error-callout' : ''}`}>
@@ -788,74 +790,24 @@ function App() {
                     </div>
                   </section>
 
-                  <section className="panel" id="sec-evidence">
-                    <h2>{t('r.evidence')}</h2>
-                    {sourceLabelKey && <p data-testid="evidence-source">{t(sourceLabelKey)}</p>}
-                    <div data-testid="evidence-list" className="evidence-cards">
-                      {result.evidence.map((item) => (
-                        <article data-testid="evidence-item" id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
-                          <div className="evidence-card-header">
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="evidence-title"
-                              onClick={() =>
-                                track('evidence_opened', {
-                                  evidence_id: item.id,
-                                  source_tier: item.tier,
-                                })
-                              }
-                            >
-                              {item.id} · {item.title}
-                            </a>
-                            <span className={`evidence-tier tier-${item.tier}`}>{item.tier}</span>
-                          </div>
-                          <p className="muted">{item.source} · {item.year}</p>
-                          <p className="evidence-claim">{item.claim}</p>
-                          <div className="evidence-metrics">
-                            <span className="evidence-metric">
-                              <span className="evidence-metric-label">{t('ui.relevance')}</span>
-                              <span className="evidence-metric-bar">
-                                <span style={{ width: `${item.relevance}%` }} />
-                              </span>
-                              <span>{item.relevance}</span>
-                            </span>
-                            <span className="evidence-metric">
-                              <span className="evidence-metric-label">{t('ui.credibility')}</span>
-                              <span className="evidence-metric-bar">
-                                <span style={{ width: `${item.credibility}%` }} />
-                              </span>
-                              <span>{item.credibility}</span>
-                            </span>
-                          </div>
-                          {item.conflictsWith.length > 0 && (
-                            <div className="warn evidence-conflict-note">{t('r.conflict')} {item.conflictsWith.join(', ')}</div>
-                          )}
-                        </article>
-                      ))}
-                    </div>
-                    {unresolvedConflicts.length > 0 && (
-                      <p className="warn">
-                        {t('r.conflictWarn', { n: unresolvedConflicts.length })}
-                      </p>
-                    )}
-                  </section>
-
                   <section className="panel" id="sec-paths">
-                    <h2>{t('r.paths')}</h2>
+                    <h2 className="label">{t('inst.directions')}</h2>
                     <ul>{result.recommendation.why.map((reason, index) => <li key={index}>{citationText(reason)}</li>)}</ul>
                     <div className="path-cards">
-                      {result.candidates.map((item) => {
+                      {[...result.candidates].sort((a, b) => b.score - a.score).map((item, index) => {
                         const isSel = selectedPath?.id === item.id
                         return (
-                          <article key={item.id} className={`path-card ${isSel ? 'path-selected' : ''}`}>
+                          <article key={item.id} className={`path-card ${item.id === result.recommendation.selectedPathId ? 'path-selected' : ''}`}>
+                            <span className="direction-numeral" data-testid="direction-numeral">{String(index + 1).padStart(2, '0')}</span>
                             <div className="path-card-header">
                               <span className="path-card-id">{item.id}</span>
                               <span className="path-card-name">{item.name}</span>
-                              {item.evidenceIds.filter(id => result.evidence.some(e => e.id === id)).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>{id}</a>)}
+                              {item.id === result.recommendation.selectedPathId && <span className="recommended-tag">{t('inst.recommended')}</span>}
+                              {item.evidenceIds.filter(id => result.evidence.some(e => e.id === id)).map(id => <a data-testid="citation" className="citation-chip" href={`#evidence-${id}`} key={id}>[{id}]</a>)}
                               <span className="path-card-score">{item.score}<span className="muted">/100</span></span>
                             </div>
+                            <p className="direction-summary">{citationText(item.hypothesis)}</p>
+                            <p className="direction-summary">{citationText(item.method)}</p>
                             <div className="path-card-bars">
                               {([
                                 [t('w.novelty'), item.novelty],
@@ -939,6 +891,64 @@ function App() {
                     </button>
                     {isAccepted && <p className="ok">{t('r.accepted')}</p>}
                   </section>
+                  <section className="panel" id="sec-plan"><h2 className="label">{t('inst.plan')}</h2><PlanRuler tasks={result.recommendation.nextSevenDays} /></section>
+                  <section className="panel" id="sec-evidence">
+                    <h2>{t('r.evidence')}</h2>
+                    {sourceLabelKey && <p data-testid="evidence-source">{t(sourceLabelKey)}</p>}
+                    <div data-testid="evidence-list" className="evidence-cards">
+                      {result.evidence.map((item) => (
+                        <article data-testid="evidence-item" id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>
+                          <span className="evidence-number">{item.id}</span>
+                          <div className="evidence-card-header">
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="evidence-title"
+                              onClick={() =>
+                                track('evidence_opened', {
+                                  evidence_id: item.id,
+                                  source_tier: item.tier,
+                                })
+                              }
+                            >
+                              {item.title}
+                            </a>
+
+                          </div>
+                          <div className="evidence-metadata">{item.source} · {item.year} · <TierChip tier={item.tier} /></div>
+                          <span data-testid="verify-tag" className={`verify-tag ${evidenceOrigin === 'openalex' || evidenceOrigin === 'crossref' ? 'verified' : 'unverified'}`}>{evidenceOrigin === 'openalex' || evidenceOrigin === 'crossref' ? `${t('inst.verified')} · ${evidenceOrigin === 'crossref' ? 'Crossref' : 'OpenAlex'}` : t(evidenceOrigin === 'template' ? 'inst.sample' : 'inst.unverified')}</span>
+                          <p className="evidence-claim">{item.claim}</p>
+                          <div className="evidence-metrics">
+                            <span className="evidence-metric">
+                              <span className="evidence-metric-label">{t('ui.relevance')}</span>
+                              <span className="evidence-metric-bar">
+                                <span style={{ width: `${item.relevance}%` }} />
+                              </span>
+                              <span>{item.relevance}</span>
+                            </span>
+                            <span className="evidence-metric">
+                              <span className="evidence-metric-label">{t('ui.credibility')}</span>
+                              <span className="evidence-metric-bar">
+                                <span style={{ width: `${item.credibility}%` }} />
+                              </span>
+                              <span>{item.credibility}</span>
+                            </span>
+                          </div>
+                          {item.conflictsWith.length > 0 && (
+                            <div className="warn evidence-conflict-note">{t('r.conflict')} {item.conflictsWith.join(', ')}</div>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                    {unresolvedConflicts.length > 0 && (
+                      <p className="warn">
+                        {t('r.conflictWarn', { n: unresolvedConflicts.length })}
+                      </p>
+                    )}
+                  </section>
+
+
                 </>
               )}
             </>

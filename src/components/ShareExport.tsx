@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 import type { AgentRunResult, TopicInput } from '../types'
 
@@ -71,11 +71,18 @@ function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string
 
 export function ShareExport({ input, result, onToast }: Props) {
   const { t, locale } = useI18n()
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const timer = window.setTimeout(() => setCopied(false), 2200)
+    return () => window.clearTimeout(timer)
+  }, [copied])
   const [isExporting, setIsExporting] = useState(false)
   const handleCopy = useCallback(async () => {
     const md = buildMarkdown(input, result, locale)
     try {
       await navigator.clipboard.writeText(md)
+      setCopied(true)
       onToast?.('success', t('export.copied'))
     } catch {
       onToast?.('error', t('export.copyFail'))
@@ -101,7 +108,7 @@ export function ShareExport({ input, result, onToast }: Props) {
   return (
     <div className="share-export">
       <button
-        className="btn btn-ghost"
+        className={`btn btn-text ${copied ? 'is-copied' : ''}`}
         onClick={() => void handleCopy()}
         type="button"
         aria-label={t('export.copy')}
@@ -110,7 +117,7 @@ export function ShareExport({ input, result, onToast }: Props) {
           <rect x="9" y="9" width="13" height="13" rx="2" />
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
         </svg>
-        {t('export.copy')}
+        <span aria-live="polite">{copied ? t('inst.copied') : t('export.copy')}</span>{copied && <span className="copy-tick" aria-hidden="true">✓</span>}
       </button>
       <button
         className="btn btn-ghost"
