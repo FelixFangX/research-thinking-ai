@@ -170,6 +170,7 @@ function App() {
     mutationFn: async (payload: TopicInput) => {
       setFreeError(null)
       setEvidenceOrigin(null)
+      setResult(null)
       setPipeline(STAGE_TEMPLATE)
       setStreamTexts({})
       setThinkingTexts({})
@@ -283,7 +284,7 @@ function App() {
 
   const pipelineProgress = useMemo(() => {
     if (pipeline.length === 0) return 0
-    return Math.round(pipeline.reduce((acc, item) => acc + item.progress, 0) / pipeline.length)
+    return Math.round(Math.max(...pipeline.map((item) => item.progress)))
   }, [pipeline])
 
   const manualReady = useMemo(() => {
@@ -542,7 +543,7 @@ function App() {
               <div key={item.id} data-testid={`stage-${item.id}`} className={`pipeline-item status-${item.status}`}>
                 <div className="pipeline-title">
                   <span>{item.name}</span>
-                  <span>{item.progress}%</span>
+                  <span>{item.status === 'running' ? `${item.progress}%` : t(`ui.${item.status === 'idle' ? 'pending' : item.status}`)}</span>
                 </div>
                 <p>{item.detail}</p>
               </div>
@@ -706,7 +707,7 @@ function App() {
                 </form>
               </section>
 
-              <StreamPanel pipeline={pipeline} streamTexts={streamTexts} thinkingTexts={thinkingTexts} />
+              <StreamPanel pipeline={pipeline} streamTexts={streamTexts} thinkingTexts={thinkingTexts} result={result ?? undefined} />
 
               {result && (
                 <>

@@ -150,7 +150,9 @@ describe('evidence endpoint', () => {
     expect(options.headers).toEqual({ 'User-Agent': 'demo' })
   })
   it('caches successful evidence and returns API security headers', async () => {
-    const entries = new Map<string, Response>()
+    const entries = new Map<string, Response>([
+      ['https://demo/__evidence?query=research%20test&limit=8', Response.json({ evidence: [{ title: 'Stale mapping' }] })],
+    ])
     vi.stubGlobal('caches', { default: { match: async (r: Request) => entries.get(r.url)?.clone(), put: async (r: Request, response: Response) => { entries.set(r.url, response) } } })
     const fetcher = vi.fn(async () => Response.json({ results: [{ id: 'https://openalex.org/W1', title: 'Paper' }] }))
     vi.stubGlobal('fetch', fetcher)
@@ -160,6 +162,7 @@ describe('evidence endpoint', () => {
     expect(await first.json()).toMatchObject({ cached: false, source: 'openalex', evidence: [expect.objectContaining({ title: 'Paper' })] })
     expect(first.headers.get('access-control-allow-origin')).toBeNull()
     await Promise.all(f.pending)
+    expect([...entries.keys()].some(key => new URL(key).searchParams.get('version') === 'v2')).toBe(true)
     expect(await (await request()).json()).toMatchObject({ cached: true })
     expect(fetcher).toHaveBeenCalledTimes(1)
   })

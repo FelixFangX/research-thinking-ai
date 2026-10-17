@@ -2,6 +2,9 @@ import { searchCrossrefEvidence, EVIDENCE_USER_AGENT } from '../src/evidence/cro
 import { buildQuery, searchOpenAlexEvidence } from '../src/evidence/openalex'
 import { HttpError, json, readBody } from './http'
 import type { Env } from './index'
+// Bump this version whenever evidence mapping changes to invalidate cached responses.
+const EVIDENCE_CACHE_VERSION = 'v2'
+
 export async function evidence(request: Request, env: Env, ctx: ExecutionContext) {
   const body = await readBody(request, 4096)
   for (const key of ['researchInterest', 'problemDomain', 'seedIdea']) {
@@ -12,7 +15,7 @@ export async function evidence(request: Request, env: Env, ctx: ExecutionContext
   if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 10) throw new HttpError(400, 'invalid_request')
   const input = { researchInterest: body.researchInterest as string, problemDomain: (body.problemDomain as string) ?? '', seedIdea: (body.seedIdea as string) ?? '' }
   const query = buildQuery(input)
-  const key = new Request(`${new URL(request.url).origin}/__evidence?query=${encodeURIComponent(query.toLowerCase())}&limit=${limit}`)
+  const key = new Request(`${new URL(request.url).origin}/__evidence?version=${EVIDENCE_CACHE_VERSION}&query=${encodeURIComponent(query.toLowerCase())}&limit=${limit}`)
   const cache = caches.default
   const cached = await cache.match(key)
   if (cached) return json({ ...await cached.json() as object, cached: true })

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import type { PipelineStageProgress } from '../types'
+import type { AgentRunResult, PipelineStageProgress } from '../types'
 import { useI18n } from '../i18n'
 
 const DATA_DELIMITER = '---DATA---'
@@ -12,6 +12,7 @@ interface Props {
   pipeline: PipelineStageProgress[]
   streamTexts: Record<string, string>
   thinkingTexts?: Record<string, string>
+  result?: AgentRunResult
 }
 
 function splitThinkingAndData(text: string): { thinking: string; data: string } {
@@ -275,30 +276,30 @@ function StageContent({
   isRunning,
   isDone,
   stageId,
+  finalData,
 }: {
   text: string
   thinkingText: string
   isRunning: boolean
   isDone: boolean
   stageId: string
+  finalData?: unknown
 }) {
   const { t } = useI18n()
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [manualOverride, setManualOverride] = useState<boolean | null>(null)
-
-  const collapsed = manualOverride !== null ? manualOverride : isDone
+  const [expanded, setExpanded] = useState(false)
 
   const handleToggle = useCallback(() => {
-    setManualOverride((prev) => (prev !== null ? !prev : !isDone))
-  }, [isDone])
+    setExpanded((prev) => !prev)
+  }, [])
 
   const { thinking, data } = useMemo(() => splitThinkingAndData(text), [text])
-  const parsedData = useMemo(() => tryParseJSON(data), [data])
+  const parsedData = useMemo(() => finalData ?? tryParseJSON(data || text), [finalData, data, text])
 
   useEffect(() => {
     const el = scrollRef.current
-    if (el && !collapsed) el.scrollTop = el.scrollHeight
-  }, [thinking, collapsed])
+    if (el && isRunning) el.scrollTop = el.scrollHeight
+  }, [thinking, isRunning])
 
   return (
     <div data-testid={isRunning ? "stream-output" : undefined} className="stream-text-wrap">
@@ -316,31 +317,30 @@ function StageContent({
             className="stream-toggle"
             onClick={handleToggle}
           >
-            {collapsed ? t('sp.expand') : t('sp.collapse')}
+            {expanded ? t('sp.collapse') : t('sp.expand')}
           </button>
         )}
       </div>
 
       <div
-        className={`stream-scroll ${collapsed ? 'stream-collapsed' : ''}`}
+        className={`stream-scroll ${expanded ? 'stream-expanded' : ''}`}
         ref={scrollRef}
       >
         <div className="sp-md-content">
-          <Markdown remarkPlugins={remarkPlugins}>{thinking}</Markdown>
+          {(!isDone || parsedData === null) && <Markdown remarkPlugins={remarkPlugins}>{thinking}</Markdown>}
           {isRunning && <span className="stream-cursor">█</span>}
         </div>
+        {isDone && parsedData !== null && (
+          <div className="sp-data-section">
+            <DataCards data={parsedData} stageId={stageId} />
+          </div>
+        )}
       </div>
-
-      {isDone && parsedData !== null && (
-        <div className="sp-data-section">
-          <DataCards data={parsedData} stageId={stageId} />
-        </div>
-      )}
     </div>
   )
 }
 
-export function StreamPanel({ pipeline, streamTexts, thinkingTexts }: Props) {
+export function StreamPanel({ pipeline, streamTexts, thinkingTexts, result }: Props) {
   const { t } = useI18n()
   const hasAny = pipeline.some((s) => s.status !== 'idle')
   const [userSelectedIdx, setUserSelectedIdx] = useState<number | null>(null)
@@ -396,6 +396,8 @@ export function StreamPanel({ pipeline, streamTexts, thinkingTexts }: Props) {
         return (
           <div className="stream-stage stream-active">
             <StageContent
+                key={stage.id}
+                finalData={result}
                 text={text}
                 thinkingText={thinkingText}
                 isRunning={isRunning}

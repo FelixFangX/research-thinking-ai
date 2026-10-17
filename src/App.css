@@ -81,6 +81,8 @@ th { font-weight: 600; color: var(--muted); }
 .sp-section-label, .sp-thinking-label { font-weight: 600; font-size: 13px; }
 .stream-toggle { border-color: transparent; font-size: 13px; }
 .stream-scroll, .sp-thinking-body { font-family: var(--font-code); font-size: 13px; line-height: 1.6; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; height: 280px; overflow: auto; }
+.stream-scroll { height: auto; max-height: 480px; }
+.stream-scroll.stream-expanded { max-height: none; }
 .sp-md-content { min-width: 0; }
 .sp-md-content p { white-space: pre; }
 .sp-md-content table { display: block; overflow-x: auto; }

@@ -18,7 +18,7 @@ API `OPTIONS` returns 204 without CORS headers. Unknown API paths return 404, wr
 
 OpenAlex is the primary evidence source, with Crossref REST API fallback on errors or empty results. Crossref requires no key and uses `OPENALEX_MAILTO` for its polite pool (default `felix@ledring.dev`). An optional OpenAlex API key can be stored as a Worker secret; it is never returned or logged. Keyless OpenAlex budgets are shared across Worker egress IPs and can be exhausted.
 
-Evidence is cached by normalized query and limit for 24 hours. The Workers Cache API is a no-op on `*.workers.dev`; caching only takes effect on a custom domain. If both sources fail or return no results, the response is 503 `evidence_rate_limited` when the primary error was OpenAlex 429, otherwise 502 `evidence_unavailable`.
+Evidence is cached by normalized query and limit for 24 hours. The Workers Cache API works on `*.workers.dev` and custom domains; caching is per-datacenter and best-effort. If both sources fail or return no results, the response is 503 `evidence_rate_limited` when the primary error was OpenAlex 429, otherwise 502 `evidence_unavailable`.
 
 ## Quotas and storage
 
