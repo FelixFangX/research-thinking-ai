@@ -12,9 +12,7 @@ interface Work {
   primary_location?: { source?: { display_name?: string; host_organization_name?: string } | null } | null
 }
 
-function tierOf(w: Work): EvidenceItem['tier'] {
-  const host = w.primary_location?.source?.host_organization_name ?? ''
-  const cited = w.cited_by_count ?? 0
+export function evidenceTier(host: string, cited: number): EvidenceItem['tier'] {
   if (cited > 100 || /nature|science|pnas|ieee|acm|springer|elsevier|oxford|cambridge|mit press/i.test(host)) return 'T1'
   if (/arxiv|biorxiv|medrxiv|ceur|scholarworks/i.test(host) || cited > 10) return 'T2'
   return 'T3'
@@ -44,7 +42,7 @@ export async function searchOpenAlexEvidence(
   if (!r.ok) throw new Error(`OpenAlex ${r.status}`)
   const works = ((await r.json()) as { results?: Work[] }).results ?? []
   return works.slice(0, limit).map((w, i) => {
-    const tier = tierOf(w)
+    const tier = evidenceTier(w.primary_location?.source?.host_organization_name ?? '', w.cited_by_count ?? 0)
     const cited = w.cited_by_count ?? 0
     const source = w.primary_location?.source?.display_name || 'OpenAlex'
     return {

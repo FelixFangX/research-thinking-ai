@@ -4,7 +4,9 @@ The no-login demo runs on Workers Static Assets, Workers AI and D1. No routes or
 
 - `GET /api/status`: allowed models and current daily quota; no inference charge.
 - `POST /api/llm`: validated messages, allowlisted model and normalized content-only SSE, ending with neuron usage and `[DONE]`. No upstream URL is accepted.
-- `POST /api/evidence`: OpenAlex evidence, cached by normalized query and limit for 24 hours. Optional `OPENALEX_API_KEY` is a Worker secret; it is never returned or logged.
+- `POST /api/evidence`: OpenAlex is the primary evidence source, with Crossref REST API fallback on errors or empty results. Crossref requires no key and uses `OPENALEX_MAILTO` for its polite pool (default `felix@ledring.dev`). An optional free OpenAlex API key can be stored with `npx wrangler@3 secret put OPENALEX_API_KEY`; it is never returned or logged. Keyless OpenAlex budgets are shared across Worker egress IPs and can be exhausted.
+
+Evidence is cached by normalized query and limit for 24 hours. The Workers Cache API is a no-op on `*.workers.dev`; caching only takes effect on a custom domain.
 
 Workers AI has a shared free allocation of 10,000 neurons/day. This Worker caps reservations at 3,000 neurons/day globally and 600/day per IP, resetting at midnight UTC. LLM requests are capped at 12/minute/IP and evidence requests at 20/minute/IP. Output is capped at 3,072 tokens. Conservative reservations use model token prices and are reconciled against streamed neuron usage; interrupted upstream streams retain their reservation. Quota and rate failures return HTTP 429. These caps protect a shared public demo, so free access can run out.
 

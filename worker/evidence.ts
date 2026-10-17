@@ -1,3 +1,4 @@
+import { searchCrossrefEvidence, EVIDENCE_USER_AGENT } from '../src/evidence/crossref'
 import { buildQuery, searchOpenAlexEvidence } from '../src/evidence/openalex'
 import { HttpError, json, readBody } from './http'
 import type { Env } from './index'
@@ -16,8 +17,21 @@ export async function evidence(request: Request, env: Env, ctx: ExecutionContext
   const cached = await cache.match(key)
   if (cached) return json({ ...await cached.json() as object, cached: true })
   try {
-    const items = await searchOpenAlexEvidence(input, fetch, limit, { mailto: env.OPENALEX_MAILTO, apiKey: env.OPENALEX_API_KEY, userAgent: 'research-thinking/1.0 (+https://github.com/FelixFangX/research-thinking-ai; mailto:felix@ledring.dev)' })
-    const data = { evidence: items, query, source: 'openalex', cached: false }
+    let items
+    let source: 'openalex' | 'crossref' = 'openalex'
+    try {
+      items = await searchOpenAlexEvidence(input, fetch, limit, { mailto: env.OPENALEX_MAILTO, apiKey: env.OPENALEX_API_KEY, userAgent: EVIDENCE_USER_AGENT })
+      if (!items.length) throw new Error('OpenAlex empty')
+    } catch (primaryError) {
+      try {
+        items = await searchCrossrefEvidence(input, fetch, limit, { mailto: env.OPENALEX_MAILTO })
+        if (!items.length) throw new Error('Crossref empty')
+        source = 'crossref'
+      } catch {
+        throw primaryError
+      }
+    }
+    const data = { evidence: items, query, source, cached: false }
     ctx.waitUntil(cache.put(key, new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=86400' } })))
     return json(data)
   } catch (error) {

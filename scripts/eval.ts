@@ -64,7 +64,7 @@ for (const it of interests.slice(0, limit)) {
   try {
     const result = await runResearch(input, {
       llm,
-      evidence: mode === 'worker' ? () => fetchEvidence(input, workerUrl) : mode === 'openalex' ? () => searchOpenAlexEvidence(input) : mode === 'edge' ? () => edgeEvidence(it) : undefined,
+      evidence: mode === 'worker' ? async () => (await fetchEvidence(input, workerUrl)).evidence : mode === 'openalex' ? () => searchOpenAlexEvidence(input) : mode === 'edge' ? () => edgeEvidence(it) : undefined,
     })
     const citations = await checkCitations(result.evidence, resolver)
     scores.push(scoreRun(it.researchInterest, result, citations))

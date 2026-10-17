@@ -200,7 +200,7 @@ function App() {
         onThinking,
         mockRef.current ? undefined : async () => {
           try {
-            const evidence = await fetchEvidence(payload)
+            const { evidence } = await fetchEvidence(payload)
             return evidence
           } catch (error) {
             setEvidenceOrigin('fallback')
@@ -772,6 +772,7 @@ function App() {
                   <section className="panel" id="sec-evidence">
                     <h2>{t('r.evidence')}</h2>
                     {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p>{t('evidence.openalex')}</p>}
+                    {result.evidence.some(item => item.source.startsWith('Crossref')) && <p>{t('evidence.crossref')}</p>}
                     <p className="muted">
                       FORMAT: {result.sourcePolicy.citationTemplate}
                     </p>
