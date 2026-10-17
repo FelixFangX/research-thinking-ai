@@ -1,7 +1,7 @@
 import { TierChip } from './TierChip'
 import { PlanRuler } from './PlanRuler'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Markdown from 'react-markdown'
+import Markdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { AgentRunResult, PipelineStageProgress } from '../types'
 import { useI18n } from '../i18n'
@@ -9,6 +9,9 @@ import { useI18n } from '../i18n'
 const DATA_DELIMITER = '---DATA---'
 
 const remarkPlugins = [remarkGfm]
+const markdownComponents: Components = {
+  table: ({ children }) => <div className="sp-table-wrap"><table>{children}</table></div>,
+}
 
 interface Props {
   pipeline: PipelineStageProgress[]
@@ -243,7 +246,7 @@ function ThinkingBlock({ text, isRunning }: { text: string; isRunning: boolean }
         ref={scrollRef}
       >
         <div className="sp-md-content">
-          <Markdown remarkPlugins={remarkPlugins}>{text}</Markdown>
+          <Markdown remarkPlugins={remarkPlugins} components={markdownComponents}>{text}</Markdown>
         </div>
       </div>
     </div>
@@ -307,7 +310,7 @@ function StageContent({
         ref={scrollRef}
       >
         <div className="sp-md-content">
-          {(!isDone || parsedData === null) && <Markdown remarkPlugins={remarkPlugins}>{thinking}</Markdown>}
+          {(!isDone || parsedData === null) && <Markdown remarkPlugins={remarkPlugins} components={markdownComponents}>{thinking}</Markdown>}
           {isRunning && <span className="stream-cursor">█</span>}
         </div>
         {isDone && parsedData !== null && (

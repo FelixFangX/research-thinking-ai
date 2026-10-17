@@ -1,6 +1,6 @@
 import { TierChip } from './components/TierChip'
 import { PlanRuler } from './components/PlanRuler'
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { track } from './analytics'
 import {
@@ -463,7 +463,9 @@ function App() {
     <main className="app-shell">
       <header className="topbar panel">
         <div className="topbar-left">
-          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label">{t('inst.brand')}</span></a>
+          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label" aria-label={t('inst.brand')} onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget.lastElementChild) delete document.documentElement.dataset.intro
+          }}>{Array.from(t('inst.brand')).map((char, i) => <span aria-hidden="true" key={i} style={{ '--i': i } as CSSProperties}>{char}</span>)}</span></a>
           <span className="tool-name">{t('app.title')}</span>
         </div>
         <div className="topbar-right">
@@ -792,7 +794,10 @@ function App() {
 
                   <section className="panel" id="sec-paths">
                     <h2 className="label">{t('inst.directions')}</h2>
-                    <ul>{result.recommendation.why.map((reason, index) => <li key={index}>{citationText(reason)}</li>)}</ul>
+                    <ul id="recommendation-note">{result.recommendation.why.map((reason, index) => <li key={index}>{citationText(reason)}</li>)}</ul>
+                    {[...result.candidates].sort((a, b) => b.score - a.score)[0]?.id !== result.recommendation.selectedPathId && (
+                      <p className="ranking-note"><a href="#recommendation-note">{t('inst.rankedRecommendation', { id: result.recommendation.selectedPathId })}</a></p>
+                    )}
                     <div className="path-cards">
                       {[...result.candidates].sort((a, b) => b.score - a.score).map((item, index) => {
                         const isSel = selectedPath?.id === item.id

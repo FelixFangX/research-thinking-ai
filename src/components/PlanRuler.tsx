@@ -3,7 +3,7 @@ import { useI18n } from '../i18n'
 export function PlanRuler({ tasks }: { tasks: string[] }) {
   const { t } = useI18n()
   const entries = tasks.map((task, index) => {
-    const match = task.match(/^(?:Day\s*|第\s*)([1-7])(?:\s*[-–~至]\s*([1-7]))?\s*(?:天)?\s*[:：·-]?\s*/i)
+    const match = task.match(/^(?:Days?\s*|第\s*)([1-7])(?:\s*(?:天)?\s*[-–—~至到]\s*(?:Day\s*|第\s*)?([1-7]))?\s*(?:天)?\s*[:：·-]?\s*/i)
     const start = match ? Number(match[1]) : Math.min(index + 1, 7)
     const end = match?.[2] ? Math.max(start, Number(match[2])) : start
     return { task: match ? task.slice(match[0].length) : task, start, end }
