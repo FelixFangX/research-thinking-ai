@@ -1,3 +1,5 @@
+import type { EvidenceOrigin } from './lib/evidenceSource'
+
 export type ParticipationMode = 'high' | 'low'
 
 export type ComplexityLevel = 'low' | 'medium' | 'high' | 'frontier'
@@ -129,6 +131,7 @@ export interface SessionRecord {
   architecture: ArchitectureMode
   selectedPathId: string
   confidence: number
+  evidenceOrigin?: EvidenceOrigin
   fullResult?: AgentRunResult
   fullInput?: TopicInput
 }

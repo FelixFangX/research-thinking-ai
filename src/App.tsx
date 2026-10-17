@@ -42,6 +42,7 @@ import type {
 import { isLLMConfigured, QuotaError } from './llm'
 import { fetchEvidence } from './evidence/client'
 import { freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
+import { evidenceSourceKey, type EvidenceOrigin } from './lib/evidenceSource'
 import './App.css'
 
 type WeightKey = keyof DecisionWeights
@@ -154,14 +155,15 @@ function App() {
 
   const [status, setStatus] = useState<FreeStatus | null>(null)
   const [freeError, setFreeError] = useState<unknown>(null)
-  const [evidenceOrigin, setEvidenceOrigin] = useState<'fallback' | null>(null)
+  const [evidenceOrigin, setEvidenceOrigin] = useState<EvidenceOrigin | null>(null)
   const refreshStatus = useCallback(() => {
     void fetch('/api/status').then(async (res) => {
       if (res.ok) setStatus(await res.json())
     }).catch(() => {})
   }, [])
   useEffect(refreshStatus, [refreshStatus])
-  const notice = freeErrorNotice(freeError ?? (status?.quota.exhausted ? new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }) : null))
+  const sourceLabelKey = evidenceSourceKey(evidenceOrigin)
+  const notice = freeErrorNotice(freeError ?? (status?.quota.exhausted ? new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }) : null), new Date(), locale)
   const runMutation = useMutation({
     retry: false,
     onSettled: refreshStatus,
@@ -177,7 +179,8 @@ function App() {
         : isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })
           ? { provider: s.apiProvider, baseUrl: s.apiBaseUrl, apiKey: s.apiKey, model: s.apiModel }
           : null
-      return runTopicAgentWithProgress(
+      let origin: EvidenceOrigin = llmCfg ? 'model' : 'template'
+      const agentResult = await runTopicAgentWithProgress(
         payload,
         (update) => {
           setPipeline((prev) => mergeStage(prev, update))
@@ -186,16 +189,13 @@ function App() {
         locale,
         llmCfg,
         onThinking,
-        mockRef.current ? undefined : async () => {
-          try {
-            const { evidence } = await fetchEvidence(payload)
-            return evidence
-          } catch (error) {
-            setEvidenceOrigin('fallback')
-            throw error
-          }
+        async () => {
+          const { evidence, source } = await fetchEvidence(payload)
+          origin = source
+          return evidence
         },
       )
+      return { agentResult, origin }
     },
     onMutate: (payload) => {
       toast('info', t('toast.start'))
@@ -205,7 +205,8 @@ function App() {
         complexity_hint: payload.complexityHint,
       })
     },
-    onSuccess: (agentResult, payload) => {
+    onSuccess: ({ agentResult, origin }, payload) => {
+      setEvidenceOrigin(origin)
       mockRef.current = false
       setResult(agentResult)
       setOverridePathId('')
@@ -231,6 +232,7 @@ function App() {
           architecture: agentResult.architecture.mode,
           selectedPathId: topPath.id,
           confidence: topPath.confidence,
+          evidenceOrigin: origin,
           fullResult: agentResult,
           fullInput: payload,
         })
@@ -490,6 +492,7 @@ function App() {
                   onClick={() => {
                     if (item.fullResult) {
                       setResult(item.fullResult)
+                      setEvidenceOrigin(item.evidenceOrigin ?? null)
                       if (item.fullInput) setInput(item.fullInput)
                       setOverridePathId('')
                       setOverrideNote('')
@@ -696,7 +699,6 @@ function App() {
                     <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
                   </div>}
                   {runMutation.isError && !notice && <p role="alert" className="run-error">{t('toast.fail', { msg: runMutation.error.message })}</p>}
-                  {evidenceOrigin === 'fallback' && <p role="status" className="muted">{t('evidence.fallback')}</p>}
                   <button data-testid="demo-button" className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
                   <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
                     {runMutation.isPending ? t('ws.running') : t('ws.run')}
@@ -748,8 +750,7 @@ function App() {
 
                   <section className="panel" id="sec-evidence">
                     <h2>{t('r.evidence')}</h2>
-                    {result.evidence.some(item => item.source.startsWith('OpenAlex')) && <p data-testid="evidence-source">{t('evidence.openalex')}</p>}
-                    {result.evidence.some(item => item.source.startsWith('Crossref')) && <p data-testid="evidence-source">{t('evidence.crossref')}</p>}
+                    {sourceLabelKey && <p data-testid="evidence-source">{t(sourceLabelKey)}</p>}
                     <div data-testid="evidence-list" className="evidence-cards">
                       {result.evidence.map((item) => (
                         <article data-testid="evidence-item" id={`evidence-${item.id}`} key={item.id} className={`evidence-card ${item.conflictsWith.length > 0 ? 'evidence-conflict' : ''}`}>

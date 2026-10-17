@@ -1,10 +1,30 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isLLMConfigured, QuotaError, type LLMConfig } from '../src/llm'
 import { freeErrorNotice, runsLeft } from '../src/lib/quota'
+import { evidenceSourceKey } from '../src/lib/evidenceSource'
+import { fetchEvidence } from '../src/evidence/client'
+import { t } from '../src/i18n/translations'
 import { runResearch } from '../src/headless'
 import { createDefaultInput } from '../src/engine'
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe('evidence source labels', () => {
+  it.each([
+    ['openalex', 'Source: OpenAlex'],
+    ['crossref', 'Source: Crossref'],
+    ['model', 'Source: model-generated (unverified)'],
+    ['template', 'Source: sample data (demo)'],
+  ] as const)('labels %s accurately in both locales', (origin, label) => {
+    const key = evidenceSourceKey(origin)!
+    expect(t('en', key)).toBe(label)
+    expect(t('zh', key)).toBe(label)
+  })
+  it('leaves old history entries without a label', () => {
+    expect(evidenceSourceKey(undefined)).toBeNull()
+    expect(evidenceSourceKey(null)).toBeNull()
+  })
+})
 
 describe('LLM configuration', () => {
   const config: LLMConfig = { provider: 'free', apiKey: '', baseUrl: '', model: '@cf/zai-org/glm-4.7-flash' }
@@ -31,10 +51,15 @@ describe('free quota notices', () => {
   it('maps quota exhaustion to a local reset time', () => {
     const resetsAt = '2026-10-18T00:00:00.000Z'
     expect(freeErrorNotice(new QuotaError('quota_exhausted', { resetsAt }))).toEqual({
-      key: 'free.exhausted', params: { time: new Date(resetsAt).toLocaleTimeString() },
+      key: 'free.exhausted', params: { time: new Date(resetsAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) },
     })
     expect(freeErrorNotice(new QuotaError('quota_exhausted'), new Date('2026-10-17T12:00:00Z'))?.params.time)
-      .toBe(new Date(resetsAt).toLocaleTimeString())
+      .toBe(new Date(resetsAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+  })
+  it.each(['en-US', 'zh-CN'])('formats reset time for %s without seconds', (locale) => {
+    const resetsAt = '2026-10-18T00:00:35.000Z'
+    expect(freeErrorNotice(new QuotaError('quota_exhausted', { resetsAt }), new Date(), locale)?.params.time)
+      .toBe(new Date(resetsAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }))
   })
   it('maps rate limits and upstream failures separately', () => {
     expect(freeErrorNotice(new QuotaError('rate_limited', { retryAfter: 12 }))).toEqual({ key: 'free.rateLimited', params: { n: 12 } })
@@ -46,6 +71,20 @@ describe('free quota notices', () => {
 })
 
 describe('live evidence fallback', () => {
+  it.each(['openalex', 'crossref'] as const)('uses real %s evidence without an LLM', async (source) => {
+    const input = createDefaultInput('en')
+    const demo = await runResearch(input)
+    const evidence = [{ ...demo.evidence[0], title: 'Real provider evidence' }]
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ evidence, source })))
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await runResearch(input, {
+      evidence: async () => (await fetchEvidence(input)).evidence,
+    })
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/api/evidence', expect.objectContaining({ method: 'POST' }))
+    expect(result.evidence).toEqual(evidence)
+    expect(result.recommendation.selectedPathId).toBeTruthy()
+  })
+
   it('finishes with demo evidence when retrieval fails without an LLM', async () => {
     const result = await runResearch(createDefaultInput('en'), {
       evidence: async () => { throw new Error('API 503') },

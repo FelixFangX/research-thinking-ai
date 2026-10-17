@@ -12,13 +12,13 @@ export interface FreeStatus {
 export function runsLeft(quota: Pick<FreeStatus['quota'], 'globalRemaining' | 'ipRemaining'>): number {
   return Math.max(0, Math.floor(Math.min(quota.globalRemaining, quota.ipRemaining) / NEURONS_PER_RUN))
 }
-export function freeErrorNotice(error: unknown, now = new Date()): { key: string; params: Record<string, string | number> } | null {
+export function freeErrorNotice(error: unknown, now = new Date(), locale?: string): { key: string; params: Record<string, string | number> } | null {
   if (error instanceof QuotaError) {
     if (error.kind === 'rate_limited') return { key: 'free.rateLimited', params: { n: Math.max(1, Math.ceil(error.retryAfter ?? 60)) } }
     const nextMidnight = new Date(now)
     nextMidnight.setUTCHours(24, 0, 0, 0)
     const reset = error.resetsAt ? new Date(error.resetsAt) : nextMidnight
-    return { key: 'free.exhausted', params: { time: (Number.isNaN(reset.getTime()) ? nextMidnight : reset).toLocaleTimeString() } }
+    return { key: 'free.exhausted', params: { time: (Number.isNaN(reset.getTime()) ? nextMidnight : reset).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) } }
   }
   if (error instanceof Error && /^API 502\b/.test(error.message)) return { key: 'free.unavailable', params: {} }
   return null

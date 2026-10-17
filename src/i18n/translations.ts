@@ -62,8 +62,10 @@ const zh: Dict = {
   "free.demo": "运行演示",
   "free.settings": "打开设置",
   "evidence.fallback": "实时 OpenAlex 证据不可用，现显示模型生成的证据",
-  "evidence.openalex": "来源：OpenAlex",
-  "evidence.crossref": "来源：Crossref",
+  "evidence.openalex": "Source: OpenAlex",
+  "evidence.crossref": "Source: Crossref",
+  "evidence.model": "Source: model-generated (unverified)",
+  "evidence.template": "Source: sample data (demo)",
   // ── 顶栏 ──
   'app.badge': 'Research ai',
   'app.title': 'Research Thinking',
@@ -516,6 +518,8 @@ const en: Dict = {
   "evidence.fallback": "Live OpenAlex evidence unavailable — showing model-generated evidence",
   "evidence.openalex": "Source: OpenAlex",
   "evidence.crossref": "Source: Crossref",
+  "evidence.model": "Source: model-generated (unverified)",
+  "evidence.template": "Source: sample data (demo)",
   // ── Topbar ──
   'app.badge': 'Research ai',
   'app.title': 'Research Thinking',
