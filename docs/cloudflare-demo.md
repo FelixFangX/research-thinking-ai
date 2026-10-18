@@ -22,7 +22,7 @@ Evidence is cached by normalized query and limit for 24 hours. The Workers Cache
 
 ## Quotas and storage
 
-The configured daily caps are **3,000 neurons globally** (`GLOBAL_DAILY_NEURONS`) and **600 per IP** (`IP_DAILY_NEURONS`), resetting at midnight UTC. LLM requests are capped at **12/minute/IP** (`IP_REQUESTS_PER_MINUTE`), and evidence requests at **20/minute/IP** (`EVIDENCE_IP_REQUESTS_PER_MINUTE`), in UTC calendar-minute buckets. Evidence requests, including cache hits, count toward their rate cap but consume no Workers AI neurons. Status requests consume no inference quota.
+The configured daily caps are **8,000 neurons globally** (`GLOBAL_DAILY_NEURONS`) and **600 per IP** (`IP_DAILY_NEURONS`), resetting at midnight UTC. LLM requests are capped at **12/minute/IP** (`IP_REQUESTS_PER_MINUTE`), and evidence requests at **20/minute/IP** (`EVIDENCE_IP_REQUESTS_PER_MINUTE`), in UTC calendar-minute buckets. Evidence requests, including cache hits, count toward their rate cap but consume no Workers AI neurons. Status requests consume no inference quota.
 
 A measured full run used about 115 neurons; usage varies. The first-five-interest eval on 2026-10-17 used 357 neurons total (~71/run) with GLM-4.7 Flash; see [`../evals/results-worker.json`](../evals/results-worker.json).
 

@@ -24,7 +24,7 @@ The legacy `supabase/` folder is no longer used by the web app; it is kept for r
 
 Try https://research.ledring.dev — no sign-up required. The same Worker is also reachable at https://research-thinking.ledring.workers.dev. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching works on `*.workers.dev` and custom domains; the Workers Cache API is per-datacenter and best-effort.
 
-Shared daily caps reset at midnight UTC: **3,000 neurons/day globally** and **600/day per IP**, with **12 LLM requests/minute per IP**. A full run measured about **115 neurons**; usage varies by input and output (see the eval below).
+Shared daily caps reset at midnight UTC: **8,000 neurons/day globally** and **600/day per IP**, with **12 LLM requests/minute per IP**. A full run measured about **115 neurons**; usage varies by input and output (see the eval below).
 
 Bring your own key under **Settings → Advanced**: calls go directly from the browser to the provider and never touch the Worker. There are no third-party requests on page load, fonts are self-hosted, and analytics is off by default.
 
