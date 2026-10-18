@@ -1,0 +1,12 @@
+{
+  "name": "Research Thinking · ledring tools",
+  "short_name": "research",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ebe7df",
+  "theme_color": "#ebe7df",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

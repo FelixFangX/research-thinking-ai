@@ -477,7 +477,7 @@ function App() {
     <main className="app-shell">
       <header className="topbar panel">
         <div className="topbar-left">
-          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label" aria-label={t('inst.brand')} onAnimationEnd={(event) => {
+          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label" onAnimationEnd={(event) => {
             if (event.target === event.currentTarget.lastElementChild) delete document.documentElement.dataset.intro
           }}>{Array.from(t('inst.brand')).map((char, i) => <span aria-hidden="true" key={i} style={{ '--i': i } as CSSProperties}>{char}</span>)}</span></a>
           <span className="tool-name">{t('app.title')}</span>
@@ -488,9 +488,9 @@ function App() {
             className="settings-btn"
             onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
             type="button"
-            aria-label={t('aria.language')}
           >
             <span lang={locale === 'zh' ? 'en' : 'zh-CN'}>{locale === 'zh' ? 'EN' : '中文'}</span>
+            <span className="sr-only"> {t('aria.language')}</span>
           </button>
           <button className="theme-pill" type="button" onClick={cycleTheme}>{theme === 'auto' ? t('inst.auto') : t(`cfg.theme.${theme}`)}</button>
           <a className="github-link" href="https://github.com/FelixFangX/research-thinking-ai" aria-label={t('inst.github')}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03a9.6 9.6 0 0 1 5 0c1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg></a>
