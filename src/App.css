@@ -187,3 +187,5 @@ article, .panel, .toast-message, .history-list li { overflow-wrap: anywhere; }
 .sp-candidate-card{position:relative;padding-left:56px}.sp-card-claim{color:var(--dim);font-size:13px}.sp-card-title{font-weight:600}
 
 .ranking-note{font:12px/1.65 var(--font-code);margin:12px 0}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;font-size:12px}

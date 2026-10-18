@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200, initial-scale=1">
+<title>Research Thinking — social card</title>
+<style>
+@font-face{font-family:"Instrument Serif";src:url('../public/fonts/instrument-serif-400-latin-basic-kern.woff2') format('woff2');font-weight:400}
+@font-face{font-family:"JetBrains Mono";src:url('../public/fonts/jetbrains-mono-400-latin-basic-noliga.woff2') format('woff2');font-weight:400}
+:root{--bg:#ebe7df;--ink:#131211;--dim:#5b564e;--rule:#d2ccc1}
+*{box-sizing:border-box}html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:var(--bg);color:var(--ink)}
+.card{position:relative;width:1200px;height:630px;padding:64px 80px}
+.frame{position:absolute;inset:24px;border:1px solid var(--rule);pointer-events:none}
+.cross{position:absolute;width:13px;height:13px}.cross::before,.cross::after{content:"";position:absolute;background:var(--dim)}.cross::before{left:6px;top:0;width:1px;height:13px}.cross::after{left:0;top:6px;width:13px;height:1px}
+.tl{top:18px;left:18px}.tr{top:18px;right:18px}.bl{bottom:18px;left:18px}.br{bottom:18px;right:18px}
+.mono{font:400 16px/1.6 "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--dim)}
+.brand{display:flex;align-items:center;gap:18px}.brand svg{width:36px;height:36px}
+h1{font:400 100px/.98 "Instrument Serif",serif;letter-spacing:-.02em;margin:60px 0 30px;max-width:950px}
+.subline{font-size:15px}.footer{position:absolute;bottom:60px;left:80px;right:80px;border-top:1px solid var(--rule);padding-top:20px;font-size:14px}
+</style>
+</head>
+<body><main class="card">
+<div class="frame"></div><i class="cross tl"></i><i class="cross tr"></i><i class="cross bl"></i><i class="cross br"></i>
+<div class="brand mono"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" style="--faint:#9c958a;--acc:#23406a" fill="none" stroke-width="2">
+  <circle cx="18" cy="18" r="17" stroke="var(--faint)" stroke-dasharray="0.593412 1.631883" transform="rotate(-90 18 18)"/>
+  <path d="M18 1A17 17 0 0 1 35 18" stroke="var(--acc)"/>
+</svg>
+<span>LEDRING / TOOLS</span></div>
+<h1>Find your next<br>research direction.</h1>
+<div class="mono subline">OPENALEX EVIDENCE · FREE AI · NO SIGN-UP</div>
+<div class="mono footer">RESEARCH.LEDRING.DEV</div>
+</main></body>
+</html>
