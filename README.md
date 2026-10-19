@@ -3,9 +3,9 @@
   <img alt="research-thinking-ai — Vague research interest in, evidence-backed directions out." src="./docs/assets/header-light.svg" width="100%">
 </picture>
 
-**An agent pipeline that turns a vague research interest into ranked, evidence-tiered research directions and a 7-day action plan.** [Live demo](https://research-thinking-ai.vercel.app) · English | [中文文档](./README.zh-CN.md)
+**An agent pipeline that turns a vague research interest into ranked, evidence-tiered research directions and a 7-day action plan.** [Live demo](https://research.ledring.dev) · English | [中文文档](./README.zh-CN.md)
 
-[![Live demo: Research Topic Agent](./docs/assets/live-demo.png)](https://research-thinking-ai.vercel.app)
+[![Live demo: Research Topic Agent](./docs/assets/live-demo.png)](https://research.ledring.dev)
 
 ## Quickstart
 
