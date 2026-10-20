@@ -22,6 +22,7 @@ import { t, type Locale } from './i18n'
 
 /** pace: false skips the typing animation (headless runs, evals, MCP). */
 export interface RunOptions {
+  recordStage?: (event: import('./ledringTrace').StageEvent) => void
   pace?: boolean
   streamLLM?: typeof streamLLM
 }
@@ -977,6 +978,37 @@ Return JSON:
 }
 
 export async function runTopicAgentWithProgress(
+  input: TopicInput,
+  onProgress: (update: PipelineStageProgress) => void,
+  onStream: StreamCallback,
+  locale: Locale,
+  llmConfig?: LLMConfig | null,
+  onThinking?: ThinkingCallback,
+  realEvidenceProvider?: () => Promise<EvidenceItem[]>,
+  options: RunOptions = {},
+): Promise<AgentRunResult> {
+  let active: PipelineStageProgress | undefined
+  const started = new Set<string>()
+  const progress = (update: PipelineStageProgress) => {
+    active = update
+    if (update.status === 'running' && !started.has(update.id)) {
+      started.add(update.id)
+      options.recordStage?.({ id: update.id, startedAt: new Date().toISOString() })
+    }
+    if (update.status === 'done' || update.status === 'error') {
+      options.recordStage?.({ id: update.id, endedAt: new Date().toISOString(), isError: update.status === 'error' })
+    }
+    onProgress(update)
+  }
+  try {
+    return await runTopicAgentPipeline(input, progress, onStream, locale, llmConfig, onThinking, realEvidenceProvider, options)
+  } catch (error) {
+    if (active) progress({ ...active, status: 'error' })
+    throw error
+  }
+}
+
+async function runTopicAgentPipeline(
   input: TopicInput,
   onProgress: (update: PipelineStageProgress) => void,
   onStream: StreamCallback,

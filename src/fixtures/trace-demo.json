@@ -1,0 +1,341 @@
+{
+  "id": "demo-research-workflows",
+  "userId": "anonymous",
+  "createdAt": "2026-10-20T00:00:00.000Z",
+  "interest": "Reproducible research workflows",
+  "mode": "low",
+  "complexityScore": 95,
+  "architecture": "multi_agent",
+  "selectedPathId": "P2",
+  "confidence": 74,
+  "evidenceOrigin": "template",
+  "llmUsed": false,
+  "fullInput": {
+    "researchInterest": "Reproducible research workflows",
+    "problemDomain": "Research tools",
+    "seedIdea": "",
+    "constraints": "",
+    "expectedTimelineWeeks": 4,
+    "complexityHint": 40,
+    "participationMode": "low",
+    "decisionWeights": {
+      "novelty": 20,
+      "feasibility": 25,
+      "impact": 20,
+      "riskControl": 15,
+      "evidence": 20
+    }
+  },
+  "fullResult": {
+    "complexity": {
+      "level": "frontier",
+      "score": 95,
+      "rationale": [
+        "Problem is relatively focused; lightweight pipeline can quickly generate candidate directions"
+      ]
+    },
+    "architecture": {
+      "mode": "multi_agent",
+      "reason": "Complexity 95/100 — auto-selected Multi-Agent Collaboration. Primary reason: Problem is relatively focused; lightweight pipeline can quickly generate candidate directions",
+      "modules": [
+        "Retriever Agent",
+        "Panorama Agent",
+        "Devil Agent (Counter-evidence)",
+        "Decision Agent",
+        "Supervisor"
+      ]
+    },
+    "workflow": [
+      {
+        "id": "retrieve",
+        "name": "Literature Retrieval",
+        "goal": "Decompose research interest into searchable queries",
+        "autoAction": "Generate search queries, retrieve & deduplicate",
+        "output": "Literature pool + timeline + keyword drift map",
+        "humanGate": "Confirm inclusion/exclusion criteria",
+        "requiredMode": "both"
+      },
+      {
+        "id": "map",
+        "name": "Landscape Mapping",
+        "goal": "Build problem-method-evidence panoramic map",
+        "autoAction": "Extract core claims, methods, datasets & metrics",
+        "output": "Direction map + research gap candidates",
+        "humanGate": "Skipped in low-participation mode — final override available at the end",
+        "requiredMode": "high_only"
+      },
+      {
+        "id": "compare",
+        "name": "Path Comparison",
+        "goal": "Form 3 executable, comparable candidate paths",
+        "autoAction": "Score by novelty / feasibility / impact / risk / evidence",
+        "output": "Candidate path matrix + risk & stop conditions",
+        "humanGate": "Confirm scoring weights match personal goals",
+        "requiredMode": "both"
+      },
+      {
+        "id": "converge",
+        "name": "Convergence & Decision",
+        "goal": "Recommend optimal path with 7-day action plan",
+        "autoAction": "Attribute conflicting evidence, output recommendation",
+        "output": "Recommended path + evidence chain + falsifiable experiment",
+        "humanGate": "Final confirmation: proceed now? Why not the other two?",
+        "requiredMode": "both"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "E1",
+        "title": "OpenAlex highly-cited review clustering: Reproducible research workflows Research tools",
+        "source": "OpenAlex + Crossref",
+        "url": "https://openalex.org/works?search=Reproducible%20research%20workflows%20Research%20tools",
+        "year": 2025,
+        "tier": "T1",
+        "claim": "Hot topics over the past five years center on interpretability, feedback loops, and few-shot evaluation.",
+        "relevance": 88,
+        "credibility": 90,
+        "conflictsWith": []
+      },
+      {
+        "id": "E2",
+        "title": "Semantic Scholar representative paper trail: Reproducible research workflows Research tools",
+        "source": "Semantic Scholar",
+        "url": "https://www.semanticscholar.org/search?q=Reproducible%20research%20workflows%20Research%20tools",
+        "year": 2024,
+        "tier": "T1",
+        "claim": "High-impact works commonly adopt public benchmarks combined with ablation studies for validation.",
+        "relevance": 85,
+        "credibility": 86,
+        "conflictsWith": []
+      },
+      {
+        "id": "E3",
+        "title": "Latest preprints: LLM end-to-end solutions lead on most metrics",
+        "source": "arXiv",
+        "url": "https://arxiv.org/search/?query=Reproducible%20research%20workflows%20Research%20tools&searchtype=all",
+        "year": 2026,
+        "tier": "T2",
+        "claim": "Scaled models continue leading on standard benchmarks, but interpretability evidence is lacking.",
+        "relevance": 78,
+        "credibility": 68,
+        "conflictsWith": [
+          "E4"
+        ]
+      },
+      {
+        "id": "E4",
+        "title": "Journal paper: Causal/structured methods more robust in low-data settings",
+        "source": "Nature Portfolio / IEEE / ACM",
+        "url": "https://scholar.google.com/scholar?q=Reproducible%20research%20workflows%20Research%20tools%20causal%20interpretable",
+        "year": 2025,
+        "tier": "T1",
+        "claim": "In limited-sample and high-interpretability tasks, structured methods are more stable.",
+        "relevance": 81,
+        "credibility": 89,
+        "conflictsWith": [
+          "E3"
+        ]
+      },
+      {
+        "id": "E5",
+        "title": "Conference report: Metric drift in real-world deployments",
+        "source": "Top Conference Proceedings",
+        "url": "https://dblp.org/search?q=Reproducible%20research%20workflows%20Research%20tools",
+        "year": 2025,
+        "tier": "T2",
+        "claim": "Offline metrics diverge significantly from real user outcomes; online validation design is needed.",
+        "relevance": 76,
+        "credibility": 74,
+        "conflictsWith": [
+          "E6"
+        ]
+      },
+      {
+        "id": "E6",
+        "title": "Industry whitepaper: Low latency is more critical than interpretability modules",
+        "source": "Industry Whitepaper",
+        "url": "https://scholar.google.com/scholar?q=Reproducible%20research%20workflows%20Research%20tools",
+        "year": 2024,
+        "tier": "T3",
+        "claim": "In commercial settings, speed takes priority over interpretability — engineering optimization first.",
+        "relevance": 63,
+        "credibility": 48,
+        "conflictsWith": [
+          "E5"
+        ]
+      }
+    ],
+    "candidates": [
+      {
+        "id": "P2",
+        "name": "Engineering Validation",
+        "hypothesis": "Prioritize a reproducible engineering baseline; validate research value in real workflows.",
+        "method": "Benchmark re-run + data-slice error analysis + online A/B observability design",
+        "novelty": 54,
+        "feasibility": 88,
+        "impact": 68,
+        "risk": 38,
+        "evidenceCoverage": 82,
+        "score": 72,
+        "confidence": 74,
+        "firstExperiment": "Build a minimal end-to-end pipeline first; record error distribution and explanation failure cases.",
+        "stopCondition": "Narrow scope if a reproducible experimental baseline cannot be formed within two weeks.",
+        "evidenceIds": [
+          "E1",
+          "E2",
+          "E5"
+        ]
+      },
+      {
+        "id": "P1",
+        "name": "Mechanism Clarification",
+        "hypothesis": "Prioritize explaining \"why it works\" — build mechanism hypothesis with focused, strong evidence.",
+        "method": "Interpretable baseline + counterfactual/causal verification + few-shot robustness test",
+        "novelty": 76,
+        "feasibility": 70,
+        "impact": 66,
+        "risk": 44,
+        "evidenceCoverage": 60,
+        "score": 66,
+        "confidence": 70,
+        "firstExperiment": "Reproduce 2 representative papers within 1 week and add interpretability metrics on public data.",
+        "stopCondition": "Pause this path if two rounds of experiments fail to improve explanation consistency by >= 8%.",
+        "evidenceIds": [
+          "E1",
+          "E2",
+          "E4"
+        ]
+      },
+      {
+        "id": "P3",
+        "name": "Cross-Domain Transfer",
+        "hypothesis": "Transfer mature methods to new domains — pursuing higher impact while accepting higher uncertainty.",
+        "method": "Cross-domain data adaptation + transfer learning + error attribution & failure boundary analysis",
+        "novelty": 78,
+        "feasibility": 62,
+        "impact": 78,
+        "risk": 64,
+        "evidenceCoverage": 58,
+        "score": 64,
+        "confidence": 66,
+        "firstExperiment": "Verify cross-domain transfer with minimum sample settings; check for significant negative transfer.",
+        "stopCondition": "Fall back to P1 or P2 if negative transfer persists > 2 iterations with no interpretability improvement.",
+        "evidenceIds": [
+          "E2",
+          "E3",
+          "E6"
+        ]
+      }
+    ],
+    "recommendation": {
+      "selectedPathId": "P2",
+      "why": [
+        "Highest composite score (72/100) with evidence coverage 82/100.",
+        "Risk level 38/100 — within manageable range.",
+        "First-week experiments are well-defined; suitable for Low Participation workflow."
+      ],
+      "nextSevenDays": [
+        "Day1-2: Complete search query review and key literature list confirmation for P2.",
+        "Day3-4: Reproduce minimal experiment and record failure samples.",
+        "Day5: Review \"continue/pause\" conditions with advisor.",
+        "Day6-7: Adjust research hypothesis based on evidence conflict results."
+      ],
+      "manualConfirmations": [
+        "Confirm recommended path fits advisor/group resource constraints",
+        "Confirm whether manual correction and re-run is needed"
+      ]
+    },
+    "sourcePolicy": {
+      "citationTemplate": "[Tier|EvidenceId] Title (Year) - Key Conclusion - URL",
+      "tiers": [
+        {
+          "tier": "T1",
+          "label": "High-credibility Academic Source",
+          "rule": "Journals / top conferences / official databases; prioritized as basis for conclusions"
+        },
+        {
+          "tier": "T2",
+          "label": "Medium-credibility Frontier Source",
+          "rule": "Preprints / conference reports; usable for frontier hypotheses, not as sole decision basis"
+        },
+        {
+          "tier": "T3",
+          "label": "Low-credibility Supplementary Source",
+          "rule": "Blogs / whitepapers / community posts; background only, not core evidence"
+        }
+      ],
+      "conflictRules": [
+        "Same-tier conflict: mark as unresolved; require human confirmation before convergence.",
+        "Cross-tier conflict: default to higher-tier evidence unless lower tier has newer data and reproducible results.",
+        "If conflict directly impacts topic conclusion, the system forces a falsifiable experiment instead of deciding outright.",
+        "Any conclusion without citations is excluded from candidate path scoring."
+      ]
+    },
+    "evaluationPlan": [
+      {
+        "id": "M1",
+        "type": "product",
+        "name": "time_to_shortlist",
+        "definition": "Time from input to generating 3 candidate paths",
+        "target": "<= 20 min",
+        "event": "candidate_shortlist_generated"
+      },
+      {
+        "id": "M2",
+        "type": "product",
+        "name": "completion_rate",
+        "definition": "Percentage of users completing the full input-compare-converge flow",
+        "target": ">= 65%",
+        "event": "topic_flow_completed"
+      },
+      {
+        "id": "M3",
+        "type": "product",
+        "name": "manual_override_rate",
+        "definition": "Rate at which users manually override recommended paths",
+        "target": "20% ~ 45%",
+        "event": "recommendation_overridden"
+      },
+      {
+        "id": "M4",
+        "type": "product",
+        "name": "seven_day_return_rate",
+        "definition": "Percentage of users returning within 7 days to continue iterating",
+        "target": ">= 35%",
+        "event": "session_returned_7d"
+      },
+      {
+        "id": "M5",
+        "type": "ai_quality",
+        "name": "citation_grounding_rate",
+        "definition": "Ratio of evidence-cited sentences in recommendations",
+        "target": ">= 90%",
+        "event": "citation_grounding_scored"
+      },
+      {
+        "id": "M6",
+        "type": "ai_quality",
+        "name": "conflict_detection_recall",
+        "definition": "Recall rate of known conflicting evidence detection",
+        "target": ">= 80%",
+        "event": "conflict_detected"
+      },
+      {
+        "id": "M7",
+        "type": "ai_quality",
+        "name": "human_acceptance_rate",
+        "definition": "Rate of acceptance of system-recommended paths after human review",
+        "target": ">= 55%",
+        "event": "recommendation_accepted"
+      },
+      {
+        "id": "M8",
+        "type": "ai_quality",
+        "name": "novelty_feasibility_balance",
+        "definition": "Novelty-feasibility balance index",
+        "target": ">= 0.7",
+        "event": "balance_index_calculated"
+      }
+    ]
+  }
+}

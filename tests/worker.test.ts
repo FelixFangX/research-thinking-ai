@@ -175,3 +175,42 @@ describe('evidence endpoint', () => {
     expect(await res.json()).toEqual({ error: status === 429 ? 'evidence_rate_limited' : 'evidence_unavailable' })
   })
 })
+
+describe('zero-AI trace routes', () => {
+  it('downloads a sample and accepts direct and wrapped records without AI or quota access', async () => {
+    const { default: record } = await import('../src/fixtures/trace-demo.json')
+    const { LedringTraceSchema } = await import('../src/ledringTrace')
+    const f = fixture()
+    f.run.mockImplementation(async () => { throw new Error('AI must never run') })
+    const used = vi.spyOn(f.store, 'used')
+    const increment = vi.spyOn(f.store, 'increment')
+    const reserve = vi.spyOn(f.store, 'reserve')
+    const prepare = vi.spyOn(f.env.DB, 'prepare')
+    for (const body of [undefined, record, { record }]) {
+      const sample = body === undefined
+      const response = await handle(new Request(`https://demo/api/trace${sample ? '/sample' : ''}`, {
+        method: sample ? 'GET' : 'POST', headers: { 'content-type': 'application/json' },
+        ...(sample ? {} : { body: JSON.stringify(body) }),
+      }), f.env, f.ctx, f.store)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toBe('application/json')
+      expect(response.headers.get('content-disposition')).toBe(`attachment; filename="research-trace-${record.id}.ledring.json"`)
+      expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+      expect(response.headers.get('cache-control')).toBe(sample ? 'public, max-age=3600' : 'no-store')
+      expect(LedringTraceSchema.safeParse(await response.json()).success).toBe(true)
+    }
+    for (const spy of [f.run, used, increment, reserve, prepare]) expect(spy).not.toHaveBeenCalled()
+  })
+  it('rejects invalid and oversized trace bodies', async () => {
+    const f = fixture()
+    f.run.mockImplementation(async () => { throw new Error('AI must never run') })
+    for (const [body, status] of [['{}', 400], ['{"record":{}}', 400], ['invalid', 400], [JSON.stringify({ data: 'x'.repeat(256 * 1024) }), 413]] as const) {
+      const response = await handle(new Request('https://demo/api/trace', { method: 'POST', headers: { 'content-type': 'application/json' }, body }), f.env, f.ctx, f.store)
+      expect(response.status).toBe(status)
+      expect(await response.json()).toEqual({ error: status === 413 ? 'body_too_large' : 'invalid_request' })
+    }
+    expect(f.run).not.toHaveBeenCalled()
+    expect(f.store.neurons.size).toBe(0)
+    expect(f.store.requests.size).toBe(0)
+  })
+})

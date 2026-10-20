@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2023", "lib": ["ES2023"], "types": ["@cloudflare/workers-types"],
-    "module": "ESNext", "moduleResolution": "Bundler", "strict": true, "noEmit": true, "skipLibCheck": true
+    "module": "ESNext", "moduleResolution": "Bundler", "resolveJsonModule": true, "allowSyntheticDefaultImports": true, "strict": true, "noEmit": true, "skipLibCheck": true
   },
   "include": ["./**/*.ts", "../src/evidence/openalex.ts", "../src/types.ts"]
 }

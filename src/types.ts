@@ -132,6 +132,12 @@ export interface SessionRecord {
   selectedPathId: string
   confidence: number
   evidenceOrigin?: EvidenceOrigin
+  startedAt?: string
+  endedAt?: string
+  model?: string
+  llmUsed?: boolean
+  stageEvents?: import('./ledringTrace').StageEvent[]
+  citationChecks?: import('./citations').CitationReport
   fullResult?: AgentRunResult
   fullInput?: TopicInput
 }
