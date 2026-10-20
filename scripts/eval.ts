@@ -1,5 +1,5 @@
 // Public eval: run the pipeline on evals/interests.json and score every run.
-//   pnpm eval --mode demo|openalex|edge|llm|worker [--limit N] [--json] [--out evals/results-<mode>.json]
+//   pnpm eval --mode demo|openalex|edge|llm|worker [--offset N] [--limit N] [--json] [--out evals/results-<mode>.json]
 // edge mode calls the deployed openalex-search function (SUPABASE_URL, SUPABASE_ANON_KEY; the public anon key).
 // llm mode reads LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, LLM_PROVIDER from env (never printed).
 // worker mode reads WORKER_URL and optional LLM_MODEL; reports consumed neurons.
@@ -24,19 +24,28 @@ const workerUrl = process.env.WORKER_URL ?? ''
 if (mode === 'worker' && !workerUrl) { console.error('worker mode needs WORKER_URL'); process.exit(2) }
 const limit = Number(opt('--limit', String(interests.length)))
 if (!Number.isInteger(limit) || limit < 1) { console.error('--limit must be a positive integer'); process.exit(2) }
+const offset = Number(opt('--offset', '0'))
+if (!Number.isInteger(offset) || offset < 0) { console.error('--offset must be a non-negative integer'); process.exit(2) }
 let totalNeurons = 0
 let usageAvailable = false
+const onUsage = (neurons: number) => { totalNeurons += neurons; usageAvailable = true }
+const provider = (process.env.LLM_PROVIDER ?? 'openai') as ApiProvider
 const llm =
-  mode === 'worker' ? { provider: 'free' as const, baseUrl: workerUrl, apiKey: '', model: process.env.LLM_MODEL ?? '@cf/zai-org/glm-4.7-flash', onUsage: (neurons: number) => { totalNeurons += neurons; usageAvailable = true } } :
+  mode === 'worker' ? { provider: 'free' as const, baseUrl: workerUrl, apiKey: '', model: process.env.LLM_MODEL ?? '@cf/zai-org/glm-4.7-flash', onUsage } :
   mode === 'llm'
     ? {
-        provider: (process.env.LLM_PROVIDER ?? 'openai') as ApiProvider,
+        provider,
         apiKey: process.env.LLM_API_KEY ?? '',
-        baseUrl: process.env.LLM_BASE_URL ?? 'https://api.openai.com/v1',
-        model: process.env.LLM_MODEL ?? 'gpt-4o-mini',
+        baseUrl: process.env.LLM_BASE_URL ?? (provider === 'free' ? '' : 'https://api.openai.com/v1'),
+        model: process.env.LLM_MODEL ?? (provider === 'free' ? '@cf/zai-org/glm-4.7-flash' : 'gpt-4o-mini'),
+        ...(provider === 'free' ? { onUsage } : {}),
       }
     : null
-if (mode === 'llm' && llm && !llm.apiKey) {
+if (mode === 'llm' && llm?.provider === 'free' && !llm.baseUrl) {
+  console.error('llm mode with LLM_PROVIDER=free needs LLM_BASE_URL (Worker origin serving /api/llm)')
+  process.exit(2)
+}
+if (mode === 'llm' && llm && llm.provider !== 'free' && !llm.apiKey) {
   console.error('llm mode needs LLM_API_KEY')
   process.exit(2)
 }
@@ -59,7 +68,7 @@ const edgeEvidence = async (it: { researchInterest: string; problemDomain: strin
 
 const resolver = openAlexResolver()
 const scores: Array<RunScore & { error?: string }> = []
-for (const it of interests.slice(0, limit)) {
+for (const it of interests.slice(offset, offset + limit)) {
   const input = { ...createDefaultInput('en'), ...it, seedIdea: '' }
   try {
     const result = await runResearch(input, {
@@ -74,7 +83,7 @@ for (const it of interests.slice(0, limit)) {
   if (!args.includes('--json')) process.stderr.write('.')
 }
 
-const summary = { mode, ...(usageAvailable ? { totalNeurons } : {}), ...(llm ? { model: llm.model } : {}), date: new Date().toISOString().slice(0, 10), ...summarizeEval(scores) }
+const summary = { mode, offset, limit, ...(usageAvailable ? { totalNeurons } : {}), ...(llm ? { model: llm.model } : {}), date: new Date().toISOString().slice(0, 10), ...summarizeEval(scores) }
 const out = opt('--out')
 if (out) writeFileSync(out, JSON.stringify({ ...summary, runs: scores }, null, 2) + '\n')
 console.log(args.includes('--json') ? JSON.stringify(summary) : `\n${JSON.stringify(summary, null, 2)}`)
