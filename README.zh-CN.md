@@ -29,6 +29,20 @@
 - **主题系统**：浅色/深色模式 + 4 种配色方案（CRT Green、Cyberpunk、Amber、Classic）
 - **数据分析**：PostHog 集成，产品指标追踪
 
+## Trace 导出（LEDRING）
+
+在完成的结果或历史记录中点击 **下载 trace**，保存经过校验的 `ledring.trace.v1` 文件。文件包含阶段选择、证据标题和 ID、最终路径，以及已记录的时间、模型使用情况和引用检查状态。旧记录可能缺少这些信息。文件不包含完整提示词、密钥或用户 ID；运行记录保留在浏览器中。
+
+`POST /api/trace` 将完成的会话记录（直接提交或使用 `{ "record": ... }` 包装，JSON，最大 256 KB）转换为 trace 下载。`GET /api/trace/sample` 提供固定的确定性演示样本。两个接口均不调用 AI、不预留 LLM 配额，也不在服务器保存运行记录。
+
+```bash
+curl -s https://research.ledring.dev/api/trace/sample -o sample.ledring.json
+curl -s https://research.ledring.dev/api/trace -H 'Content-Type: application/json' --data-binary @record.json -o run.ledring.json
+ledring flowchart sample.ledring.json
+ledring instability sample.ledring.json
+```
+
+
 ## 快速开始
 
 ```bash

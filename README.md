@@ -20,6 +20,20 @@ pnpm dev                     # http://localhost:5173
 
 The legacy `supabase/` folder is no longer used by the web app; it is kept for reference until it is retired.
 
+## Trace export (LEDRING)
+
+Use **Download trace** on a finished result or history item to save a validated `ledring.trace.v1` run. It includes stage choices, evidence titles and ids, the selected path, and recorded timing, model usage and citation statuses where available. Older records may lack this metadata. Full prompts, credentials and user ids are excluded; runs stay in your browser.
+
+`POST /api/trace` converts a finished session record (directly or as `{ "record": ... }`, JSON, up to 256 KB) into a trace download. `GET /api/trace/sample` serves a fixed deterministic demo. Both endpoints use no AI, reserve no LLM quota and store no runs.
+
+```bash
+curl -s https://research.ledring.dev/api/trace/sample -o sample.ledring.json
+curl -s https://research.ledring.dev/api/trace -H 'Content-Type: application/json' --data-binary @record.json -o run.ledring.json
+ledring flowchart sample.ledring.json
+ledring instability sample.ledring.json
+```
+
+
 ## Cloudflare demo (preview)
 
 Try https://research.ledring.dev — no sign-up required. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching on the custom domain uses the Workers Cache API and is per-datacenter and best-effort.

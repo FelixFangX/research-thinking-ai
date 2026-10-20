@@ -1,3 +1,6 @@
+import { downloadTrace } from './lib/downloadTrace'
+import type { StageEvent } from './ledringTrace'
+import type { SessionRecord } from './types'
 import { EvidenceClaim } from './components/EvidenceClaim'
 import { TierChip } from './components/TierChip'
 import { PlanRuler } from './components/PlanRuler'
@@ -109,6 +112,7 @@ function App() {
   const [result, setResult] = useState<AgentRunResult | null>(null)
   const [streamTexts, setStreamTexts] = useState<Record<string, string>>({})
   const [thinkingTexts, setThinkingTexts] = useState<Record<string, string>>({})
+  const [traceRecord, setTraceRecord] = useState<SessionRecord | null>(null)
   const { records: history, addRecord: addHistory } = useHistory('anonymous')
   const [overridePathId, setOverridePathId] = useState('')
   const [overrideNote, setOverrideNote] = useState('')
@@ -205,6 +209,8 @@ function App() {
         : isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })
           ? { provider: s.apiProvider, baseUrl: s.apiBaseUrl, apiKey: s.apiKey, model: s.apiModel }
           : null
+      const startedAt = new Date().toISOString()
+      const stageEvents: StageEvent[] = []
       let origin: EvidenceOrigin = llmCfg ? 'model' : 'template'
       const agentResult = await runTopicAgentWithProgress(
         payload,
@@ -229,8 +235,13 @@ function App() {
           origin = source
           return evidence
         },
+        { recordStage: (event) => {
+          const existing = stageEvents.find(e => e.id === event.id)
+          if (existing) Object.assign(existing, event)
+          else stageEvents.push(event)
+        } },
       )
-      return { agentResult, origin }
+      return { agentResult, origin, stageEvents, startedAt, model: llmCfg?.model, llmUsed: !!llmCfg }
     },
     onMutate: (payload) => {
       toast('info', t('toast.start'))
@@ -240,7 +251,7 @@ function App() {
         complexity_hint: payload.complexityHint,
       })
     },
-    onSuccess: ({ agentResult, origin }, payload) => {
+    onSuccess: ({ agentResult, origin, stageEvents, startedAt, model, llmUsed }, payload) => {
       setEvidenceOrigin(origin)
       mockRef.current = false
       setResult(agentResult)
@@ -257,7 +268,8 @@ function App() {
 
       const topPath = agentResult.candidates[0]
       if (topPath) {
-        void addHistory({
+        const record: SessionRecord = {
+          startedAt, endedAt: new Date().toISOString(), model, llmUsed, stageEvents,
           id: crypto.randomUUID(),
           userId: 'anonymous',
           createdAt: new Date().toISOString(),
@@ -270,7 +282,9 @@ function App() {
           evidenceOrigin: origin,
           fullResult: agentResult,
           fullInput: payload,
-        })
+        }
+        setTraceRecord(record)
+        void addHistory(record)
       }
 
       toast('success', t('toast.done', { name: topPath?.name ?? 'N/A' }))
@@ -557,6 +571,7 @@ function App() {
                   title={t('sidebar.viewDetail')}
                   onClick={() => {
                     if (item.fullResult) {
+                      setTraceRecord(item)
                       setResult(item.fullResult)
                       setEvidenceOrigin(item.evidenceOrigin ?? null)
                       if (item.fullInput) setInput(item.fullInput)
@@ -583,6 +598,7 @@ function App() {
                     {new Date(item.createdAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </button>
+                {item.fullInput && item.fullResult && <button type="button" className="btn btn-text" onClick={() => { if (!downloadTrace(item)) toast('error', t('export.traceFail')) }}>{t('export.trace')}</button>}
                 </li>
               ))}
             </ul>
@@ -775,7 +791,7 @@ function App() {
                   <section className="panel" id="sec-arch">
                     <div className="section-header">
                       <h2>{t('r.arch')}</h2>
-                      <ShareExport input={input} result={result} onToast={handleToast} />
+                      <ShareExport record={traceRecord ?? undefined} input={input} result={result} onToast={handleToast} />
                     </div>
                     <div className="result-grid">
                       <article>

@@ -1,3 +1,5 @@
+import { toLedringTrace, traceFilename, TraceRecordSchema } from '../src/ledringTrace'
+import traceSample from '../src/fixtures/trace-demo.json'
 import { HttpError, json, readBody, securityHeaders } from './http'
 import { buildAIInput, estimateCost, models, normalizeSSE, validateLLM } from './llm'
 import { buckets, D1Store, quotaDecision, type UsageStore } from './quota'
@@ -18,6 +20,16 @@ export async function handle(request: Request, env: Env, ctx: ExecutionContext, 
   if (!path.startsWith('/api/')) return env.ASSETS.fetch(request)
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: securityHeaders })
   try {
+    if (path === '/api/trace' || path === '/api/trace/sample') {
+      const sample = path.endsWith('/sample')
+      if (request.method !== (sample ? 'GET' : 'POST')) throw new HttpError(405, 'method_not_allowed')
+      const body = sample ? traceSample : await readBody(request, 256 * 1024)
+      const parsed = TraceRecordSchema.safeParse('record' in body ? body.record : body)
+      if (!parsed.success) throw new HttpError(400, 'invalid_request')
+      const trace = toLedringTrace(parsed.data)
+      return json(trace, 200, { 'content-disposition': `attachment; filename="${traceFilename(trace.id)}"`,
+        ...(sample ? { 'cache-control': 'public, max-age=3600' } : {}) })
+    }
     const now = Date.now(), b = await buckets(request.headers.get('CF-Connecting-IP') ?? 'unknown', new Date(now))
     if (Math.random() < 0.02) ctx.waitUntil(env.DB.prepare('DELETE FROM usage WHERE updated_at < ?').bind(now - 3 * 86400000).run())
     const globalLimit = Number(env.GLOBAL_DAILY_NEURONS), ipLimit = Number(env.IP_DAILY_NEURONS)

@@ -1,9 +1,12 @@
+import { downloadTrace } from '../lib/downloadTrace'
+import type { SessionRecord } from '../types'
 import { formatArchitecture } from '../engine'
 import { useCallback, useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 import type { AgentRunResult, TopicInput } from '../types'
 
 interface Props {
+  record?: SessionRecord
   input: TopicInput
   result: AgentRunResult
   onToast?: (type: 'success' | 'info' | 'error', message: string) => void
@@ -70,7 +73,7 @@ function buildMarkdown(input: TopicInput, result: AgentRunResult, locale: string
   return lines.join('\n')
 }
 
-export function ShareExport({ input, result, onToast }: Props) {
+export function ShareExport({ input, result, onToast, record }: Props) {
   const { t, locale } = useI18n()
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -108,6 +111,7 @@ export function ShareExport({ input, result, onToast }: Props) {
 
   return (
     <div className="share-export">
+      {record?.fullInput && record.fullResult && <><button className="btn btn-ghost" type="button" onClick={() => { if (!downloadTrace(record)) onToast?.('error', t('export.traceFail')) }}>{t('export.trace')}</button><small className="muted">{t('export.traceHelp')}</small></>}
       <button
         className={`btn btn-text ${copied ? 'is-copied' : ''}`}
         onClick={() => void handleCopy()}

@@ -268,6 +268,9 @@ const zh: Dict = {
 
   // ── 导出 ──
   'export.copy': '复制报告',
+  'export.trace': '下载 trace',
+  'export.traceFail': '这条记录太旧，没法导出 trace。',
+  'export.traceHelp': '用 LEDRING 打开：ledring flowchart <file>',
   'export.download': '下载 Markdown',
   'export.copied': '报告已复制到剪贴板',
   'export.copyFail': '复制失败，请手动选择文本',
@@ -764,6 +767,9 @@ const en: Dict = {
 
   // ── Export ──
   'export.copy': 'Copy Report',
+  'export.trace': 'Download trace',
+  'export.traceFail': 'This run is too old to export as a trace.',
+  'export.traceHelp': 'Open it with LEDRING: ledring flowchart <file>',
   'export.download': 'Download Markdown',
   'export.copied': 'Report copied to clipboard',
   'export.copyFail': 'Copy failed — please select text manually',
