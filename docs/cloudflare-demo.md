@@ -1,6 +1,6 @@
 # Cloudflare public demo
 
-The login-free preview is at https://research.ledring.dev (Worker custom domain, set in `wrangler.jsonc` `routes`), and still at https://research-thinking.ledring.workers.dev. It runs on Workers Static Assets, Workers AI and D1. The web app no longer uses the legacy `supabase/` folder, which remains for reference until retirement.
+The login-free preview is at https://research.ledring.dev (Worker custom domain, set in `wrangler.jsonc` `routes`). It runs on Workers Static Assets, Workers AI and D1. The web app no longer uses the legacy `supabase/` folder, which remains for reference until retirement.
 
 ## Endpoints
 
@@ -18,7 +18,7 @@ API `OPTIONS` returns 204 without CORS headers. Unknown API paths return 404, wr
 
 OpenAlex is the primary evidence source, with Crossref REST API fallback on errors or empty results. Crossref requires no key and uses `OPENALEX_MAILTO` for its polite pool (default `felix@ledring.dev`). An optional OpenAlex API key can be stored as a Worker secret; it is never returned or logged. Keyless OpenAlex budgets are shared across Worker egress IPs and can be exhausted.
 
-Evidence is cached by normalized query and limit for 24 hours. The Workers Cache API works on `*.workers.dev` and custom domains; caching is per-datacenter and best-effort. If both sources fail or return no results, the response is 503 `evidence_rate_limited` when the primary error was OpenAlex 429, otherwise 502 `evidence_unavailable`.
+Evidence is cached by normalized query and limit for 24 hours. Caching on the custom domain uses the Workers Cache API and is per-datacenter and best-effort. If both sources fail or return no results, the response is 503 `evidence_rate_limited` when the primary error was OpenAlex 429, otherwise 502 `evidence_unavailable`.
 
 ## Quotas and storage
 
@@ -54,7 +54,7 @@ npx wrangler@3 secret put OPENALEX_API_KEY
 The D1 database is already identified in `wrangler.jsonc`. Deploying is separate from changing source. Confirm the deployed backend with a small real eval (it consumes quota):
 
 ```sh
-WORKER_URL=https://research-thinking.ledring.workers.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
+WORKER_URL=https://research.ledring.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
 ```
 
 Worker eval summaries include consumed neurons when reported. Publish only actual dated run results.
