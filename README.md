@@ -22,7 +22,7 @@ The legacy `supabase/` folder is no longer used by the web app; it is kept for r
 
 ## Cloudflare demo (preview)
 
-Try https://research.ledring.dev — no sign-up required. The same Worker is also reachable at https://research-thinking.ledring.workers.dev. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching works on `*.workers.dev` and custom domains; the Workers Cache API is per-datacenter and best-effort.
+Try https://research.ledring.dev — no sign-up required. The free Workers AI model is **GLM-4.7 Flash**, with **Gemma 4 26B** selectable. Live citations come from OpenAlex with Crossref fallback. Evidence caching on the custom domain uses the Workers Cache API and is per-datacenter and best-effort.
 
 Shared daily caps reset at midnight UTC: **8,000 neurons/day globally** and **600/day per IP**, with **12 LLM requests/minute per IP**. A full run measured about **115 neurons**; usage varies by input and output (see the eval below).
 
@@ -88,7 +88,7 @@ Measured on 2026-10-14 unless dated otherwise:
 The `worker` run used **357 neurons total (~71 per run)**. On the same first 5 interests on 2026-10-17, `demo` scored 0.33 on-topic evidence / 0% citations verified, and `openalex` scored 0.85 / 100%. Raw Worker results: [`evals/results-worker.json`](./evals/results-worker.json). To reproduce (consumes live quota):
 
 ```bash
-WORKER_URL=https://research-thinking.ledring.workers.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
+WORKER_URL=https://research.ledring.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
 ```
 
 ## Deploy
