@@ -94,7 +94,7 @@ Measured on 2026-10-14 unless dated otherwise:
 | `demo` (no key, templated) | 20/20 | 20/20 | 1.00* | 0.34 | **0%** (100 search-page links, 20 non-paper links) |
 | `openalex` (real evidence, deterministic stages) | 20/20 | 20/20 | 0.95 | 0.88 | **100%** (160/160) |
 | `edge` (deployed `openalex-search` function, before #9 is deployed) | 20/20 | 20/20 | 0.26 | **0.06** | 100% |
-| `llm` | not run yet (needs a key: `LLM_API_KEY=... pnpm eval --mode llm`) | | | | |
+| `llm` (first 10 interests, 2026-10-20, `@cf/zai-org/glm-4.7-flash`, evidence written by the model) | 10/10 | 10/10 | 0.95 | 0.55 | **0%** (0/60: 55 non-DOI links, 4 DOIs not found, 1 title mismatch) |
 | `worker` (first 5 interests, 2026-10-17, `@cf/zai-org/glm-4.7-flash`) | 100% | 100% | 1.00 | 0.85 | **100%** |
 
 \* The demo template echoes the interest, so its coverage is trivially 1.0. Raw results: [`evals/`](./evals). Demo-mode evidence is illustrative only. It isn't a citation, and the eval says so. `edge` mode checks production: `SUPABASE_URL=... SUPABASE_ANON_KEY=... pnpm eval --mode edge`.
@@ -104,6 +104,18 @@ The `worker` run used **357 neurons total (~71 per run)**. On the same first 5 i
 ```bash
 WORKER_URL=https://research.ledring.dev pnpm eval --mode worker --limit 5 --out evals/results-worker.json
 ```
+
+The `llm` mode gets evidence from the LLM. For the free Workers AI path, set `LLM_PROVIDER=free` and `LLM_BASE_URL` to the Worker origin serving `/api/llm`; no API key is required. It defaults to `@cf/zai-org/glm-4.7-flash` and reports `totalNeurons` when usage is returned. Other providers require `LLM_API_KEY`; the default provider and model remain `openai` and `gpt-4o-mini`. Set `LLM_MODEL` to override the model.
+
+```bash
+LLM_PROVIDER=free LLM_BASE_URL=https://research.ledring.dev pnpm eval --mode llm --offset 5 --limit 5
+```
+
+All modes accept `--offset N` (non-negative integer, default 0) and `--limit N` (positive integer, default all interests). The summary always includes both values.
+
+### Model eval: Workers AI, 2026-10-20
+
+The `llm` run above cost 1,022 neurons (~102 per run), so it covers 10 of the 20 interests to stay inside the shared free pool. Every stage came back well-formed, but none of the 60 sources the model made up could be verified. That's the reason the app pulls evidence from OpenAlex before the model writes anything. Details and per-interest scores: [`evals/results/2026-10-20-glm-4.7-flash-llm.md`](./evals/results/2026-10-20-glm-4.7-flash-llm.md).
 
 ## Deploy
 
