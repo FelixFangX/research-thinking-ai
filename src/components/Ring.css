@@ -1,4 +1,4 @@
-.ring{display:inline-block;flex:none;--c:var(--acc);--a:90deg;width:14px;aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--c) var(--a),transparent 0),repeating-conic-gradient(var(--faint) 0 2deg,transparent 2deg 7.5deg);mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 0)}
+.ring{display:inline-block;flex:none;--c:var(--acc);--a:90deg;width:14px;aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--c) var(--a),color-mix(in srgb,var(--faint) 55%,transparent) 0);mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 0)}
 .ring-l{width:96px;aspect-ratio:1}
 [data-state=idle] .ring{animation:breathe 4s ease-in-out infinite}
 [data-state=armed] .ring{--c:var(--amber);--a:360deg;opacity:.6}
@@ -8,7 +8,7 @@
 .pipeline-ring{position:relative;margin:8px auto 24px}
 .ring-segment{position:absolute;inset:0;border-radius:50%;--seg:var(--faint);background:conic-gradient(from 2deg,var(--seg) 86deg,transparent 0);mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 0);clip-path:polygon(50% 50%,50% 0,100% 0,100% 50%)}
 .quadrant-1{transform:rotate(90deg)}.quadrant-2{transform:rotate(180deg)}.quadrant-3{transform:rotate(270deg)}
-.ring-segment[data-stage-state=running]{--seg:var(--amber);animation:breathe 1.2s ease-in-out infinite;background:repeating-conic-gradient(from 2deg,var(--seg) 0 4deg,transparent 4deg 7.5deg)}
+.ring-segment[data-stage-state=running]{--seg:var(--amber);animation:breathe 1.2s ease-in-out infinite;background:conic-gradient(from 2deg,var(--seg) 86deg,transparent 0)}
 .ring-segment[data-stage-state=done]{--seg:var(--acc)}.ring-segment[data-stage-state=error]{--seg:var(--red)}
 @keyframes spin{to{transform:rotate(360deg)}}@keyframes breathe{50%{opacity:.7}}@keyframes blink{50%{opacity:0}}@keyframes bloom{50%{filter:drop-shadow(0 0 6px var(--acc))}}
 @media(prefers-reduced-motion:reduce){.ring,.ring-segment{animation:none!important}[data-state=processing] .ring{--a:270deg}}

@@ -755,7 +755,7 @@ function App() {
                     </label>
                   </div>
 
-                  <h3>{t('ws.weights')}</h3>
+                  <h2>{t('ws.weights')}</h2>
                   <div className="weights">
                     {(
                       [
