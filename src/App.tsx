@@ -19,7 +19,6 @@ import {
   getUxDeliverables,
 } from './blueprint'
 import { EmptyState } from './components/EmptyState'
-import { NoLLMDialog } from './components/NoLLMDialog'
 import { IterationTracker } from './components/IterationTracker'
 import { SettingsPanel } from './components/SettingsPanel'
 import { StreamPanel } from './components/StreamPanel'
@@ -45,9 +44,10 @@ import type {
   PipelineStageProgress,
   TopicInput,
 } from './types'
-import { isLLMConfigured, QuotaError } from './llm'
+import { isLLMConfigured } from './llm'
+import { shouldUseSample } from './lib/researchConfig'
 import { fetchEvidence } from './evidence/client'
-import { errorMessageNotice, freeErrorNotice, runsLeft, FREE_MODELS, type FreeStatus } from './lib/quota'
+import { errorMessageNotice, freeErrorNotice, type FreeStatus } from './lib/quota'
 import { evidenceSourceKey, type EvidenceOrigin } from './lib/evidenceSource'
 import { Ring, PipelineRing } from './components/Ring'
 import { updateTabLed, type InstrumentState } from './lib/tabLed'
@@ -90,6 +90,10 @@ function App() {
     const base = createDefaultInput(locale)
     return {
       ...base,
+      researchInterest: '',
+      problemDomain: '',
+      seedIdea: '',
+      constraints: '',
       participationMode: settings.defaultMode,
       complexityHint: settings.defaultComplexity,
       expectedTimelineWeeks: settings.defaultTimelineWeeks,
@@ -121,7 +125,7 @@ function App() {
   const [iterView, setIterView] = useState(false)
   const [previousResult, setPreviousResult] = useState<AgentRunResult | null>(null)
   const iteration = useIteration('anonymous')
-  const [showNoLLM, setShowNoLLM] = useState(false)
+  const [isSample, setIsSample] = useState(false)
   const hasTrackedView = useRef(false)
   const autoScrollRef = useRef(false)
   const lastScrollY = useRef(0)
@@ -190,7 +194,7 @@ function App() {
   }, [])
   useEffect(refreshStatus, [refreshStatus])
   const sourceLabelKey = evidenceSourceKey(evidenceOrigin)
-  const notice = freeErrorNotice(freeError ?? (status?.quota.exhausted ? new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }) : null), new Date(), locale)
+  const notice = freeErrorNotice(freeError, new Date(), locale)
   const runMutation = useMutation({
     retry: false,
     onSettled: refreshStatus,
@@ -371,24 +375,18 @@ function App() {
     setIsAccepted(false)
     setManualChecks({})
     autoScrollRef.current = false
-    if (useMock) {
-      mockRef.current = true
-    }
+    const s = settingsRef.current
+    mockRef.current = shouldUseSample(
+      { provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel },
+      { requested: useMock, quotaExhausted: status?.quota.exhausted },
+    )
+    setIsSample(mockRef.current)
     runMutation.mutate(input)
-  }, [input, runMutation, STAGE_TEMPLATE])
+  }, [input, runMutation, STAGE_TEMPLATE, status])
 
   const handleRun = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     if (runMutation.isPending) return
-    const s = settingsRef.current
-    if (!isLLMConfigured({ provider: s.apiProvider, apiKey: s.apiKey, baseUrl: s.apiBaseUrl, model: s.apiModel })) {
-      setShowNoLLM(true)
-      return
-    }
-    if (s.apiProvider === 'free' && status?.quota.exhausted) {
-      setFreeError(new QuotaError('quota_exhausted', { resetsAt: status.quota.resetsAt }))
-      return
-    }
     doRun()
   }
 
@@ -572,6 +570,7 @@ function App() {
                   onClick={() => {
                     if (item.fullResult) {
                       setTraceRecord(item)
+                      setIsSample(item.llmUsed === false)
                       setResult(item.fullResult)
                       setEvidenceOrigin(item.evidenceOrigin ?? null)
                       if (item.fullInput) setInput(item.fullInput)
@@ -653,20 +652,32 @@ function App() {
           {view === 'workspace' && !iterView && (
             <>
               <section className="panel animate-in" id="sec-input">
-                <p className="label">{t('inst.brief')}</p>
                 <h1 className="brief-title">{t('inst.title')}</h1>
-                <p className="label brief-subline">{t('inst.sub')}</p>
                 <form ref={formRef} className="input-form" onSubmit={handleRun}>
                   <label>
                     {t('ws.interest')}
                     <textarea
                       data-user-content
+                      required
                       value={input.researchInterest}
                       onChange={(e) => updateField('researchInterest', e.target.value)}
                       rows={3}
                       placeholder={t('ws.interest.ph')}
                     />
                   </label>
+
+                  <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
+                    <Ring /><span className="run-label">{runMutation.isPending ? t('ws.running') : t('ws.run')}</span>
+                    <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘↵' : 'Ctrl+↵'}</kbd>
+                  </button>
+                  {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className={`quota-notice ${notice.key === 'free.unavailable' ? 'error-callout' : ''}`}>
+                    <p>{t(notice.key, notice.params)}</p>
+                    <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
+                    <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
+                  </div>}
+                  {runMutation.isError && !notice && <div data-testid="quota-notice" role="alert" className="run-error"><p>{(m => t(m.key, m.params))(errorMessageNotice(runMutation.error, new Date(), locale))}</p><button type="button" onClick={() => doRun()}>{t('error.retry')}</button><button type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button></div>}
+                  {isSample && <span data-testid="sample-badge" className="verify-tag">{t('inst.sample')}</span>}
+                  <details className="more-context"><summary>{t('inst.context')}</summary><div className="context-fields">
                   <div className="mode-switch">
                     <button
                       type="button"
@@ -686,23 +697,6 @@ function App() {
                     </button>
                   </div>
 
-                  <button data-testid="run" className="btn btn-primary" type="submit" disabled={runMutation.isPending}>
-                    <Ring /><span className="run-label">{runMutation.isPending ? t('ws.running') : t('ws.run')}</span>
-                    <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘↵' : 'Ctrl+↵'}</kbd>
-                  </button>
-                  {settings.apiProvider === 'free' && notice && <div data-testid="quota-notice" role="status" className={`quota-notice ${notice.key === 'free.unavailable' ? 'error-callout' : ''}`}>
-                    <p>{t(notice.key, notice.params)}</p>
-                    <button className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
-                    <button className="btn btn-ghost" type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button>
-                  </div>}
-                  {runMutation.isError && !notice && <div data-testid="quota-notice" role="alert" className="run-error"><p>{(m => t(m.key, m.params))(errorMessageNotice(runMutation.error, new Date(), locale))}</p><button type="button" onClick={() => doRun()}>{t('error.retry')}</button><button type="button" onClick={() => setShowSettings(true)}>{t('free.settings')}</button></div>}
-                  <p data-testid="engine-line" className="muted">{settings.apiProvider === 'free'
-                    ? t('free.engine', { model: (status?.models ?? FREE_MODELS).find(m => m.id === settings.apiModel)?.label ?? settings.apiModel })
-                    : settings.apiModel}
-                  {settings.apiProvider === 'free' && status && <> · {t('free.runs', { n: runsLeft(status.quota) })}</>}
-                  </p>
-                    <button data-testid="demo-button" className="btn btn-ghost" type="button" disabled={runMutation.isPending} onClick={() => doRun(true)}>{t('free.demo')}</button>
-                  <details className="more-context"><summary>{t('inst.context')}</summary><div className="context-fields">
                   <label>
                     {t('ws.domain')}
                     <input
@@ -1148,14 +1142,6 @@ function App() {
           onUpdate={updateSettings}
           onReset={resetSettings}
           onClose={() => setShowSettings(false)}
-        />
-      )}
-
-      {showNoLLM && (
-        <NoLLMDialog
-          onConfigure={() => { setShowNoLLM(false); setShowSettings(true) }}
-          onMockPreview={() => { setShowNoLLM(false); doRun(true) }}
-          onCancel={() => setShowNoLLM(false)}
         />
       )}
 

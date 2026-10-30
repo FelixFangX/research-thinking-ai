@@ -8,10 +8,10 @@ interface Props {
   }
 }
 
-export function EmptyState({ icon = '🔬', title, description, action }: Props) {
+export function EmptyState({ icon, title, description, action }: Props) {
   return (
     <div className="empty-state animate-in" role="status">
-      <div className="empty-state-icon" aria-hidden="true">{icon}</div>
+      {icon && <div className="empty-state-icon" aria-hidden="true">{icon}</div>}
       <h3 className="empty-state-title">{title}</h3>
       <p className="empty-state-desc">{description}</p>
       {action ? (
