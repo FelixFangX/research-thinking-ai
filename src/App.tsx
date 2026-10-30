@@ -487,16 +487,24 @@ function App() {
     setTheme(next)
   }
 
+  const showBlendFold = view === 'workspace' && !iterView && instrumentState === 'idle'
+
   return (
-    <main className="app-shell">
+    <main className={`app-shell${showBlendFold ? ' blend-landing' : ''}`}>
       <header className="topbar panel">
         <div className="topbar-left">
-          <a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label" onAnimationEnd={(event) => {
+          {showBlendFold ? <a className="blend-brand" href="https://ledring.dev/">Research</a> : <><a className="family-link" href="https://ledring.dev" aria-label={t('inst.brand')}><Ring /><span className="label brand-label" onAnimationEnd={(event) => {
             if (event.target === event.currentTarget.lastElementChild) delete document.documentElement.dataset.intro
           }}>{Array.from(t('inst.brand')).map((char, i) => <span aria-hidden="true" key={i} style={{ '--i': i } as CSSProperties}>{char}</span>)}</span></a>
-          <span className="tool-name">{t('app.title')}</span>
+          <span className="tool-name">{t('app.title')}</span></>}
         </div>
         <div className="topbar-right">
+          {showBlendFold && <nav className="blend-family" aria-label="LEDRING family">
+            <a href="https://ledring.dev/tools/">Tools</a>
+            <a href="https://ledring.dev/projects/">Projects</a>
+            <a href="https://ledring.dev/notes/">Notes</a>
+            <a href="https://ledring.dev/">Home ↗</a>
+          </nav>}
           <button
             id="btn-lang"
             className="settings-btn"
@@ -520,6 +528,29 @@ function App() {
           </button>
         </div>
       </header>
+      {showBlendFold && <>
+        <section className="blend-hero" aria-labelledby="blend-title">
+          <div className="blend-copy">
+            <p className="label">Research</p>
+            <h1 id="blend-title">Turn an itch into<br />a research direction.</h1>
+            <p className="blend-lead">Start with a question worth following. Keep the evidence close and decide what to explore next.</p>
+            <a className="blend-start" href="#research-interest" onClick={(event) => {
+              event.preventDefault()
+              document.getElementById('research-interest')?.focus()
+            }}><span className="blend-led" aria-hidden="true" />Start a research itch<span aria-hidden="true">↗</span></a>
+          </div>
+          <article className="blend-panel">
+            <p className="label">A research itch</p>
+            <h2>What would change<br />your mind?</h2>
+            <ol className="blend-steps">
+              <li><span>01 / Question</span><span>Make it specific</span></li>
+              <li><span>02 / Evidence</span><span>Follow the sources</span></li>
+              <li><span>03 / Direction</span><span>Choose the next question</span></li>
+            </ol>
+          </article>
+        </section>
+        <section className="blend-direction"><h2>Question → evidence → direction.</h2></section>
+      </>}
       <nav className="tabs" role="tablist" aria-label={t('aria.nav')}>
         <button
           type="button"
@@ -660,6 +691,7 @@ function App() {
                   <label>
                     {t('ws.interest')}
                     <textarea
+                      id="research-interest"
                       data-user-content
                       value={input.researchInterest}
                       onChange={(e) => updateField('researchInterest', e.target.value)}
