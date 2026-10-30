@@ -189,3 +189,6 @@ article, .panel, .toast-message, .history-list li { overflow-wrap: anywhere; }
 .ranking-note{font:12px/1.65 var(--font-code);margin:12px 0}
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;font-size:12px}
+
+/* Give the initial research form the space of the unused sidebar. */
+.layout.layout-empty { grid-template-columns: minmax(0, 1fr); }

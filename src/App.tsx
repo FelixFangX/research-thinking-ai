@@ -485,6 +485,8 @@ function App() {
     setTheme(next)
   }
 
+  const showSidebar = history.length > 0 || runMutation.isPending || runMutation.isError || result !== null || iteration.activePlan !== null
+
   return (
     <main className="app-shell">
       <header className="topbar panel">
@@ -549,16 +551,11 @@ function App() {
       </nav>
 
       {runMutation.isPending && <div className="mobile-progress" data-testid="mobile-progress" aria-hidden="true"><PipelineRing stages={pipeline} /><span>{pipeline[activeIndex].name} · {activeIndex + 1}/4</span></div>}
-      <section className="layout">
-        <aside className="panel sidebar" aria-label={t('aria.sidebar')}>
+      <section className={`layout${showSidebar ? '' : ' layout-empty'}`}>
+        {showSidebar && <aside className="panel sidebar" aria-label={t('aria.sidebar')}>
           <details className="session-log"><summary>{t('sidebar.log')}</summary>
-          <p className="muted">{t('sidebar.logDesc')}</p>
           {history.length === 0 ? (
-            <EmptyState
-              icon="◇"
-              title={t('sidebar.empty.title')}
-              description={t('sidebar.empty.desc')}
-            />
+            <EmptyState title={t('sidebar.empty.title')} />
           ) : (
             <ul className="history-list">
               {history.map((item) => (
@@ -632,7 +629,7 @@ function App() {
           <details className="events-log" open={window.matchMedia('(min-width: 900px)').matches || undefined}><summary><span className="desktop-events">{t('sidebar.events')}</span><span className="mobile-events">{t('inst.log')}</span></summary>
             <ul className="analytics-list">{events.length === 0 && <li>{t('inst.noEvents')}</li>}{events.map((event, index) => <li key={index}>{event}</li>)}</ul>
           </details>
-        </aside>
+        </aside>}
 
         <section className="content" role="tabpanel">
           {view === 'workspace' && iterView && iteration.activePlan && (
